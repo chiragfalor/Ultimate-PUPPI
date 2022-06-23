@@ -4,7 +4,7 @@ import time
 import sklearn
 import numpy as np
 import sys
-#sys.path.append('/home/yfeng/UltimatePuppi/deepjet-geometric/')
+#sys.path.append('/home/yfeng/UltimatePuppi/Ultimate-PUPPI/')
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
 import os
@@ -16,11 +16,11 @@ from tqdm import tqdm
 
 BATCHSIZE = 64
 start_time = time.time()
-# data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
-# data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+# data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train/")
+# data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
 
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train2/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test2/")
+data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train2/")
+data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test2/")
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -32,7 +32,7 @@ model = "combined_model"
 model = "Dynamic_GATv2"
 model = "modelv2"
 # model = "modelv3"
-model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
 

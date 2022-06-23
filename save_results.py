@@ -79,13 +79,13 @@ def save_predictions(model, data_loader, model_name):
 
     datadict = {'zpred':zpred, 'ztrue':ztrue, 'px':px, 'py':py, 'eta':eta, 'E':E, 'pid':pid, 'charge':charge, 'zinput':zinput}
     df = pd.DataFrame.from_dict(datadict)
-    df.to_csv("/work/submit/cfalor/upuppi/deepjet-geometric/results/{}.csv".format(model_name), index=False)
-    print("Saved predictions to file {}".format("/work/submit/cfalor/upuppi/deepjet-geometric/results/{}.csv".format(model_name)))
+    df.to_csv("/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}.csv".format(model_name), index=False)
+    print("Saved predictions to file {}".format("/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}.csv".format(model_name)))
 
 
 if __name__ == "__main__":
     BATCHSIZE = 64
-    data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+    data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                             follow_batch=['x_pfc', 'x_vtx'])
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         raise(Exception("Model not found"))
 
     upuppi = Net(pfc_input_dim=13)
-    model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+    model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
     model_loc = os.path.join(model_dir, 'epoch-{}.pt'.format(epoch_to_load))
     print("Saving predictions of model {}".format(model), "at epoch {}".format(epoch_to_load))
 

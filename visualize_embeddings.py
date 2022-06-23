@@ -47,7 +47,7 @@ def visualize_embeddings(pfc1_embeddings, pfc2_embeddings, pfc1_truth, pfc2_trut
     # add a legend
     plt.legend(['charged particles', 'neutral particles'])
     # save the plot
-    plt.savefig('/work/submit/cfalor/upuppi/deepjet-geometric/results/{}'.format(save_path))
+    plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}'.format(save_path))
     plt.close()
 
 def plot_pfc_embeddings(pfc_embeddings, pfc_truth, save_path):
@@ -55,13 +55,13 @@ def plot_pfc_embeddings(pfc_embeddings, pfc_truth, save_path):
     pfc_embeddings_2d = pca.fit_transform(pfc_embeddings)
     plt.scatter(pfc_embeddings_2d[:, 0], pfc_embeddings_2d[:, 1], c=pfc_truth, cmap=cm.get_cmap('jet'))
     cbar = plt.colorbar()
-    plt.savefig('/work/submit/cfalor/upuppi/deepjet-geometric/results/{}'.format(save_path))
+    plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}'.format(save_path))
     plt.close()
 
 if __name__ == '__main__':
     # test visualize_embeddings
     # load the model
-    data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+    data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
     model = "embedding_model"
     model = "contrastive_loss"
     model = "embedding_GCN"
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     model = "embedding_GCN_cheating"
     model = "embedding_GCN_cheating_low_lr"
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
-    model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+    model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
 
     # load the model
     epoch_num = 19

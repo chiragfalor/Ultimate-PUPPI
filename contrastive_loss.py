@@ -11,8 +11,8 @@ from tqdm import tqdm
 BATCHSIZE = 1
 start_time = time.time()
 print("Training...")
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train/")
+data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
@@ -23,7 +23,7 @@ model = "embedding_GCN"
 model = "embedding_GCN_v1"
 model = "embedding_GCN_cheating"
 model = "embedding_GCN_cheating_low_lr"
-model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
