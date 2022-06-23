@@ -1,0 +1,173 @@
+# pyright: reportMissingModuleSource=false
+
+import time
+import sklearn
+import numpy as np
+import sys
+#sys.path.append('/home/yfeng/UltimatePuppi/deepjet-geometric/')
+from upuppi_v0_dataset import UPuppiV0
+from torch_geometric.data import DataLoader
+import os
+import torch
+from torch import nn
+from models.modelv4 import Net
+from tqdm import tqdm
+import cProfile
+import re
+
+
+BATCHSIZE = 64
+start_time = time.time()
+data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
+data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+
+data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train2/")
+data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test2/")
+
+
+train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
+                          follow_batch=['x_pfc', 'x_vtx'])
+test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
+                         follow_batch=['x_pfc', 'x_vtx'])
+
+model = "combined_model"
+model = "Dynamic_GATv2"
+model = "modelv2"
+# model = "modelv3"
+model = "modelv4"
+model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+#model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
+
+
+print("Training {}...".format(model))
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
+# print the device used
+print("Using device: ", device, torch.cuda.get_device_name(0))
+
+# create the model
+upuppi = Net(pfc_input_dim=12).to(device)
+optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.01)
+
+def embedding_loss(data, pfc_enc, vtx_enc):
+    total_pfc_loss = 0
+    total_vtx_loss = 0
+    reg_loss = 0
+    euclidean_loss = nn.MSELoss().to(device)
+    batch_size = data.x_pfc_batch.max().item() + 1
+    for i in range(batch_size):
+        # get the batch index of the current batch
+        pfc_indices = (data.x_pfc_batch == i)
+        vtx_indices = (data.x_vtx_batch == i)
+        # get the embedding of the pfc, vtx, and truth in the current batch
+        pfc_enc_batch = pfc_enc[pfc_indices, :]
+        vtx_enc_batch = vtx_enc[vtx_indices, :]
+        truth_batch = data.truth[pfc_indices].to(dtype=torch.int64, device=device)
+        # take out particles which have corresponding vertices
+        valid_pfc = (truth_batch >= 0)
+        truth_batch = truth_batch[valid_pfc]
+        pfc_enc_batch = pfc_enc_batch[valid_pfc, :]
+        # the true encoding is the embedding of the true vertex
+        vertex_encoding = vtx_enc_batch[truth_batch, :]
+        # calculate loss between pfc encoding and vertex encoding
+        pfc_loss = 0.5*euclidean_loss(pfc_enc_batch, vertex_encoding)
+        total_pfc_loss += pfc_loss
+
+        if i//10 == 0:
+            random_indices = torch.randperm(len(truth_batch))[:30]
+            random_vtx_encoding = vertex_encoding[random_indices, :]
+            for j in range(len(random_vtx_encoding)):
+                for k in range(j+1, len(random_vtx_encoding)):
+                    vtx_loss = -0.01*euclidean_loss(random_vtx_encoding[j, :], random_vtx_encoding[k, :])
+                    total_vtx_loss += vtx_loss
+        else:
+            continue
+            
+            # regularize the whole embedding to keep it normalized
+    reg_loss = ((torch.norm(vtx_enc, p=2, dim=1)/10)**6).mean()
+    # print the losses
+    # print("Pfc loss: ", total_pfc_loss.item(), " Vtx loss: ", total_vtx_loss.item(), " Reg loss: ", reg_loss.item())
+    return total_pfc_loss + total_vtx_loss + reg_loss
+
+
+
+
+
+def train(c_ratio=0.05, neutral_ratio=2):
+    upuppi.train()
+    counter = 0
+    total_loss = 0
+    for data in tqdm(train_loader):
+        start_time = time.time()
+        time_list = []
+        counter += 1
+        data = data.to(device)
+        time_list.append(time.time() - start_time) 
+        optimizer.zero_grad()
+        out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        time_list.append(time.time() - start_time)
+        if c_ratio > 0:
+            emb_loss = (1/40000)*embedding_loss(data, pfc_enc, vtx_enc)
+        else:
+            emb_loss = 0
+        time_list.append(time.time() - start_time)
+        if neutral_ratio > 1:
+            # calculate neutral loss
+            neutral_indices = torch.nonzero(data.x_pfc[:, 11] == 0).squeeze()
+            neutral_out = out[:,0][neutral_indices]
+            neutral_y = data.y[neutral_indices]
+            neutral_loss = nn.MSELoss()(neutral_out, neutral_y)
+            # calculate charged loss
+            charged_indices = torch.nonzero(data.x_pfc[:,11] != 0).squeeze()
+            charged_out = out[:,0][charged_indices]
+            charged_y = data.y[charged_indices]
+            charged_loss = nn.MSELoss()(charged_out, charged_y)
+            # calculate total loss
+            regression_loss = 100*(neutral_ratio*neutral_loss + charged_loss)/(neutral_ratio + 1)
+        else:
+            regression_loss = 100*nn.MSELoss()(out.squeeze(), data.y)
+        time_list.append(time.time() - start_time)
+        if counter % 50 == 0:
+            print("Regression loss: ", regression_loss.item(), " Embedding loss: ", emb_loss)
+        loss = (c_ratio*emb_loss) + (1-c_ratio)*regression_loss
+        time_list.append(time.time() - start_time)
+        loss.backward()
+        time_list.append(time.time() - start_time)
+        optimizer.step()
+        time_list.append(time.time() - start_time)
+        total_loss += loss.item()
+        print("Time: ", time_list)
+        break
+    total_loss = total_loss / counter        
+    return total_loss
+
+# test function
+@torch.no_grad()
+def test():
+    upuppi.eval()
+    euclidean_loss = nn.MSELoss()
+    counter = 0
+    total_loss = 0
+    for data in tqdm(test_loader):
+        counter += 1
+        data = data.to(device)
+        optimizer.zero_grad()
+        out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        regression_loss = euclidean_loss(out.squeeze(), data.y)
+        loss = regression_loss
+        total_loss += loss.item()
+    total_loss = total_loss / counter        
+    return total_loss
+
+# train the model
+NUM_EPOCHS = 20
+
+loss = 0
+test_loss = 0
+loss = train()
+
+# loss = train(c_ratio=c_ratio, neutral_ratio=2*epoch+1)
+
+
+    
+
