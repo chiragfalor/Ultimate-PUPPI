@@ -22,8 +22,8 @@ start_time = time.time()
 data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
 
-data_train = UPuppiV0(home_dir + 'train2/')
-data_test = UPuppiV0(home_dir + 'test2/')
+# data_train = UPuppiV0(home_dir + 'train2/')
+# data_test = UPuppiV0(home_dir + 'test2/')
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -34,6 +34,9 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
 model = "combined_model"
 model = "Dynamic_GATv2"
 model = "modelv2"
+# model = "modelv2_neg"
+# model = "modelv2_nz199"
+# model = "modelv2_nz0"
 # model = "modelv3"
 model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
@@ -45,10 +48,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # print the device used
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
-epoch_to_load = 18
-upuppi = Net(pfc_input_dim=12).to(device)
-optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.01)
-model_dir = home_dir + 'deepjet-geometric/models/{}/'.format(model)
+# create the model
+
+epoch_to_load = 20
+upuppi = Net(pfc_input_dim=13).to(device)
+optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
+model_dir = home_dir + 'models/{}/'.format(model)
 model_loc = os.path.join(model_dir, 'epoch-{}.pt'.format(epoch_to_load))
 state_dicts = torch.load(model_loc)
 upuppi_state_dict = state_dicts['model']
@@ -97,35 +102,54 @@ def embedding_loss(data, pfc_enc, vtx_enc):
     return total_pfc_loss + total_vtx_loss + reg_loss
 
 
+def process_data(data):
+    '''
+    Apply data processing as needed and return the processed data.
+    '''
+    
+    # switch the sign of the z coordinate of the pfc
+    return data
+    data.x_pfc[:, -1] *= -1
+    data.y *= -1
+    neutral_indices = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
+    charged_indices = torch.nonzero(data.x_pfc[:,-2] != 0).squeeze()
+    # convert z of neutral particles from -199 to 0
+    # data.x_pfc[neutral_indices, -1] *= -1
+    return data
+
 
 def train(c_ratio=0.05, neutral_ratio=1):
     upuppi.train()
     counter = 0
     total_loss = 0
     for data in tqdm(train_loader):
+        # euclidean_loss = nn.MSELoss().to(device)
+        # let euclidean_loss be the L1 loss
+        euclidean_loss = nn.L1Loss().to(device)
         counter += 1
         data = data.to(device) 
+        data = process_data(data)
         optimizer.zero_grad()
         out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         if c_ratio > 0:
-            emb_loss = (1/40000)*embedding_loss(data, pfc_enc, vtx_enc)
+            emb_loss = (1/200)*embedding_loss(data, pfc_enc, vtx_enc)
         else:
             emb_loss = 0
         if neutral_ratio > 1:
             # calculate neutral loss
-            neutral_indices = torch.nonzero(data.x_pfc[:, 11] == 0).squeeze()
+            neutral_indices = torch.nonzero(data.x_pfc[:, -2] == 0).squeeze()
             neutral_out = out[:,0][neutral_indices]
             neutral_y = data.y[neutral_indices]
-            neutral_loss = nn.MSELoss()(neutral_out, neutral_y)
+            neutral_loss = euclidean_loss(neutral_out, neutral_y)
             # calculate charged loss
-            charged_indices = torch.nonzero(data.x_pfc[:,11] != 0).squeeze()
+            charged_indices = torch.nonzero(data.x_pfc[:,-2] != 0).squeeze()
             charged_out = out[:,0][charged_indices]
             charged_y = data.y[charged_indices]
-            charged_loss = nn.MSELoss()(charged_out, charged_y)
+            charged_loss = euclidean_loss(charged_out, charged_y)
             # calculate total loss
-            regression_loss = 1000*(neutral_ratio*neutral_loss + charged_loss)/(neutral_ratio + 1)
+            regression_loss = 200*(neutral_ratio*neutral_loss + charged_loss)/(neutral_ratio + 1)
         else:
-            regression_loss = 1000*nn.MSELoss()(out.squeeze(), data.y)
+            regression_loss = 200*euclidean_loss(out.squeeze(), data.y)
         if counter % 50 == 0:
             print("Regression loss: ", regression_loss.item(), " Embedding loss: ", emb_loss)
         loss = (c_ratio*emb_loss) + (1-c_ratio)*regression_loss
@@ -153,8 +177,7 @@ def test():
     total_loss = total_loss / counter        
     return total_loss
 
-# train the model
-NUM_EPOCHS = 5
+NUM_EPOCHS = 30
 
 for epoch in range(epoch_to_load+1, NUM_EPOCHS+epoch_to_load+1): 
     loss = 0
@@ -163,7 +186,7 @@ for epoch in range(epoch_to_load+1, NUM_EPOCHS+epoch_to_load+1):
         c_ratio = 0.05
     else:
         c_ratio=0
-    loss = train(c_ratio=c_ratio, neutral_ratio=epoch-17+1)
+    loss = train(c_ratio=c_ratio, neutral_ratio=epoch+1)
     state_dicts = {'model':upuppi.state_dict(),
                    'opt':optimizer.state_dict()} 
 
