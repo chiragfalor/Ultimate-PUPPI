@@ -41,7 +41,7 @@ def plot_predictions(df, model_name):
     axs[2].set_ylabel('zpred')
     axs[2].set_title('zpred vs ztrue for particles with input_charge != 0') 
 
-    plt.savefig(home_dir + 'results/{}_zpred_vs_ztrue.png'.format(model), bbox_inches='tight')
+    plt.savefig(home_dir + 'results/{}_zpred_vs_ztrue.png'.format(model_name), bbox_inches='tight')
     plt.close()
 
 if __name__ == '__main__':
