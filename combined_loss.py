@@ -1,9 +1,6 @@
 # pyright: reportMissingModuleSource=false
 
 import time
-import sklearn
-import numpy as np
-import sys
 #sys.path.append('/home/yfeng/UltimatePuppi/Ultimate-PUPPI/')
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader

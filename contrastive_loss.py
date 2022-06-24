@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false
 import time, os, torch, numpy as np
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
@@ -7,6 +8,10 @@ from torch.nn import functional as F
 from models.embedding_GCN import Net
 from tqdm import tqdm
 
+
+# load home directory path from home_path.txt
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
 
 BATCHSIZE = 1
 start_time = time.time()
