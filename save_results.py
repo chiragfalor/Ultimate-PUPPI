@@ -8,11 +8,19 @@ import os
 from torch import nn
 import torch
 from tqdm import tqdm
+import pandas as pd
 
 # load the home directory path
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
+def process_data(data):
+    """
+    Process data to be used in the model.
+    """
+    data.x_pfc[:,-1] *= -1
+    # data.y *= -1
+    return data
 
 #import utils
 def save_predictions(model, data_loader, model_name):
@@ -25,10 +33,6 @@ def save_predictions(model, data_loader, model_name):
     print("Using device: ", device, torch.cuda.get_device_name(0))
     upuppi.to(device)
     upuppi.eval()
-
-    #Create csv file
-
-    import pandas as pd
 
     # save final predictions and labels
 
@@ -48,6 +52,7 @@ def save_predictions(model, data_loader, model_name):
     for data in tqdm(test_loader):
         counter += 1
         data.to(device)
+        data = process_data(data)
         with torch.no_grad():
             out = upuppi(data.x_pfc,data.x_vtx,data.x_pfc_batch,data.x_vtx_batch)
             loss = nn.MSELoss()(out[0][:,0], data.y)
@@ -62,8 +67,8 @@ def save_predictions(model, data_loader, model_name):
                 E = data.x_pfc[:,3].cpu().numpy()
                 # convert pid from one hot to int
                 pid = np.argmax(data.x_pfc[:,4:11].cpu().numpy(), axis=1)
-                charge = data.x_pfc[:,11].cpu().numpy()
-                # zinput = data.x_pfc[:,12].cpu().numpy()
+                charge = data.x_pfc[:,-2].cpu().numpy()
+                zinput = data.x_pfc[:,-1].cpu().numpy()
             else:
                 zpred = np.concatenate((zpred, out[0][:,0].cpu().numpy()), axis=0)
                 ztrue = np.concatenate((ztrue, data.y.cpu().numpy()), axis=0)
@@ -73,26 +78,26 @@ def save_predictions(model, data_loader, model_name):
                 E = np.concatenate((E, data.x_pfc[:,3].cpu().numpy()), axis=0)
                 # convert pid from one hot to int
                 pid = np.concatenate((pid, np.argmax(data.x_pfc[:,4:11].cpu().numpy(), axis=1)), axis=0)
-                charge = np.concatenate((charge, data.x_pfc[:,11].cpu().numpy()), axis=0)
-                # zinput = np.concatenate((zinput, data.x_pfc[:,12].cpu().numpy()), axis=0)
+                charge = np.concatenate((charge, data.x_pfc[:,-2].cpu().numpy()), axis=0)
+                zinput = np.concatenate((zinput, data.x_pfc[:,-1].cpu().numpy()), axis=0)
 
         
     print("Total testing loss: {}".format(total_loss/(counter*BATCHSIZE)))  
 
     datadict = {'zpred':zpred, 'ztrue':ztrue, 'px':px, 'py':py, 'eta':eta, 'E':E, 'pid':pid, 'charge':charge, 'zinput':zinput}
     df = pd.DataFrame.from_dict(datadict)
-    df.to_csv("/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}.csv".format(model_name), index=False)
-    print("Saved predictions to file {}".format("/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}.csv".format(model_name)))
-
+    df.to_csv(home_dir + "results/{}.csv".format(model_name), index=False)
+    print("Saved predictions to file {}".format(home_dir + "results/{}.csv".format(model_name)))
+    return df
 
 if __name__ == "__main__":
     BATCHSIZE = 64
-    data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
+    data_test = UPuppiV0(home_dir + "test/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                             follow_batch=['x_pfc', 'x_vtx'])
 
 
-    epoch_to_load = 18
+    epoch_to_load = 19
     # model = "DynamicGCN"
     # model = "GAT"
     model = "GravNetConv"
@@ -100,6 +105,10 @@ if __name__ == "__main__":
     model = "combined_model"
     # model = "combined_model2"
     model = "modelv2"
+    model = "modelv2_neg"
+    # model = "modelv2_nz199"
+    # model = "modelv2_nz0"
+    # model = "modelv2_orig"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
     if model == "DynamicGCN":
@@ -112,7 +121,7 @@ if __name__ == "__main__":
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model == "modelv2":
+    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig":
         from models.modelv2 import Net
     elif model == "modelv3":
         from models.modelv3 import Net
@@ -130,4 +139,7 @@ if __name__ == "__main__":
     state_dicts = torch.load(model_loc)
     upuppi_state_dict = state_dicts['model']
     upuppi.load_state_dict(upuppi_state_dict)
-    save_predictions(model=upuppi, data_loader=test_loader, model_name=model)   # save predictions
+    df = save_predictions(model=upuppi, data_loader=test_loader, model_name=model)   # save predictions
+    # plot the predictions using plot_results.py
+    from plot_results import plot_predictions
+    plot_predictions(df, model_name=model)

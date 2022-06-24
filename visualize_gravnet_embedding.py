@@ -137,7 +137,7 @@ if __name__ == '__main__':
         # out, batch, pfc_embeddings = net(data.x_pfc, data.x_pfc_batch)
         # visualize the embeddings
         
-        # neutral_idx = torch.nonzero(data.x_pfc[:,11] == 0).squeeze()
+        # neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
         # pfc_embeddings = pfc_embeddings[neutral_idx, :]
         # pfc_truth = pfc_truth[neutral_idx]
         visualize_embeddings(pfc_embeddings.cpu().numpy(), vtx_embeddings.cpu().numpy(), pfc_truth, vtx_truth, '{}_{}_embeddings.png'.format(model, epoch_num))

@@ -33,8 +33,8 @@ model = "combined_model"
 model = "Dynamic_GATv2"
 model = "modelv2"
 model = "modelv2_neg"
-model = "modelv2_nz199"
-model = "modelv2_nz0"
+# model = "modelv2_nz199"
+# model = "modelv2_nz0"
 # model = "modelv3"
 model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
@@ -97,12 +97,12 @@ def process_data(data):
     '''
     
     # switch the sign of the z coordinate of the pfc
-    # data.x_pfc[:, -1] *= -1
-    # data.y *= -1
-    neutral_indices = torch.nonzero(data.x_pfc[:,5] == 0).squeeze()
-    charged_indices = torch.nonzero(data.x_pfc[:,5] != 0).squeeze()
+    data.x_pfc[:, -1] *= -1
+    data.y *= -1
+    neutral_indices = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
+    charged_indices = torch.nonzero(data.x_pfc[:,-2] != 0).squeeze()
     # convert z of neutral particles from -199 to 0
-    data.x_pfc[neutral_indices, -1] *= 0
+    # data.x_pfc[neutral_indices, -1] *= -1
     return data
 
 
@@ -127,12 +127,12 @@ def train(c_ratio=0.05, neutral_ratio=1):
             emb_loss = 0
         if neutral_ratio > 1:
             # calculate neutral loss
-            neutral_indices = torch.nonzero(data.x_pfc[:, 11] == 0).squeeze()
+            neutral_indices = torch.nonzero(data.x_pfc[:, -2] == 0).squeeze()
             neutral_out = out[:,0][neutral_indices]
             neutral_y = data.y[neutral_indices]
             neutral_loss = euclidean_loss(neutral_out, neutral_y)
             # calculate charged loss
-            charged_indices = torch.nonzero(data.x_pfc[:,11] != 0).squeeze()
+            charged_indices = torch.nonzero(data.x_pfc[:,-2] != 0).squeeze()
             charged_out = out[:,0][charged_indices]
             charged_y = data.y[charged_indices]
             charged_loss = euclidean_loss(charged_out, charged_y)
