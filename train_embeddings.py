@@ -11,12 +11,16 @@ from torch import nn
 from models.model2 import Net
 from tqdm import tqdm
 
+# load the home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
+
 
 BATCHSIZE = 32
 start_time = time.time()
 print("Training...")
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -25,7 +29,7 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                          follow_batch=['x_pfc', 'x_vtx'])
 
 model = "embedding_model"
-model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

@@ -15,14 +15,17 @@ from tqdm import tqdm
 import cProfile
 import re
 
+# load the home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
 
 BATCHSIZE = 64
 start_time = time.time()
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
 
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train2/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test2/")
+data_train = UPuppiV0(home_dir + 'train2/')
+data_test = UPuppiV0(home_dir + 'test2/')
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -35,7 +38,7 @@ model = "Dynamic_GATv2"
 model = "modelv2"
 # model = "modelv3"
 model = "modelv4"
-model_dir = '/work/submit/cfalor/upuppi/deepjet-geometric/models/{}/'.format(model)
+model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
 

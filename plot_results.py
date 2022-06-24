@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 # import seaborn as sns
 
+# get home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
+
 # model = "DynamicGCN"
 model = "GravNetConv"
 # model = "combined_model2"
@@ -13,7 +17,7 @@ model = "modelv2"
 # model = "modelv3"
 # model = "Dynamic_GATv2"
 # df = pd.read_csv("/work/submit/cfalor/upuppi/z_reg/results/finalcsv.txt")
-df = pd.read_csv("/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}.csv".format(model))
+df = pd.read_csv(home_dir + 'results/{}.csv'.format(model))
 print(df.head())
 
 # make 3 plots:
@@ -45,6 +49,6 @@ axs[2].set_xlabel('ztrue')
 axs[2].set_ylabel('zpred')
 axs[2].set_title('zpred vs ztrue for particles with input_charge != 0') 
 
-plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}_zpred_vs_ztrue.png'.format(model), bbox_inches='tight')
+plt.savefig(home_dir + 'results/{}_zpred_vs_ztrue.png'.format(model), bbox_inches='tight')
 plt.close()
 

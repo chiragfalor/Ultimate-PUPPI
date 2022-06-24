@@ -11,6 +11,10 @@ from torch_geometric.data import DataLoader
 np.random.seed(0)
 torch.manual_seed(40)
 
+# get home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
+
 def visualize_embeddings(pfc_embeddings, vtx_embeddings, pfc_truth, vtx_truth, save_path):
     # given the embeddings of pfc and vtx, perform PCA and plot the embeddings
     # in 2D space
@@ -42,7 +46,7 @@ def visualize_embeddings(pfc_embeddings, vtx_embeddings, pfc_truth, vtx_truth, s
     # the color of vertices is index
     # add colorbar
     # save the plot
-    plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}'.format(save_path), bbox_inches='tight')
+    plt.savefig(home_dir + 'results/{}'.format(save_path), bbox_inches='tight')
     plt.close()
 
 
@@ -83,7 +87,7 @@ def distinguish_neutral_charged_embeddings(pfc_embeddings, pfc_truth, save_path,
     # the color of vertices is index
     # ax.scatter(vtx_embeddings_2d[:, 0], vtx_embeddings_2d[:, 1], c=np.arange(vtx_embeddings_2d.shape[0]), cmap=cm.get_cmap('jet', 10), marker='*', s=100)
     # save the plot
-    plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}'.format(save_path), bbox_inches='tight')
+    plt.savefig(home_dir + 'results/{}'.format(save_path), bbox_inches='tight')
     plt.close()
 
 if __name__ == '__main__':
@@ -117,7 +121,7 @@ if __name__ == '__main__':
         raise(Exception("Model not found"))
 
     test_loader = DataLoader(data_test, batch_size=320, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
-    model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
+    model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
     epoch_num = 18

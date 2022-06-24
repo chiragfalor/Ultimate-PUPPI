@@ -8,8 +8,11 @@ import matplotlib.pyplot as plt
 # import smear_chargedhadrons as sch
 # from awkward import Array
 # from awkward.layout import ListOffsetArray64
+# get home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
 
-file = h5py.File("/work/submit/cfalor/upuppi/deepjet-geometric/train/raw/samples_v0_dijet_46.h5", "r")
+file = h5py.File(home_dir + 'train/raw/samples_v0_dijet_46.h5', "r")
 
 print("Keys:", file.keys())
 

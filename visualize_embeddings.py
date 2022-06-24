@@ -11,6 +11,10 @@ from torch_geometric.data import DataLoader
 
 net = Net(pfc_input_dim=13)
 
+# get home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
+
 # random seed
 np.random.seed(0)
 torch.manual_seed(11)
@@ -47,7 +51,7 @@ def visualize_embeddings(pfc1_embeddings, pfc2_embeddings, pfc1_truth, pfc2_trut
     # add a legend
     plt.legend(['charged particles', 'neutral particles'])
     # save the plot
-    plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}'.format(save_path))
+    plt.savefig(home_dir + 'results/{}'.format(save_path))
     plt.close()
 
 def plot_pfc_embeddings(pfc_embeddings, pfc_truth, save_path):
@@ -55,11 +59,11 @@ def plot_pfc_embeddings(pfc_embeddings, pfc_truth, save_path):
     pfc_embeddings_2d = pca.fit_transform(pfc_embeddings)
     plt.scatter(pfc_embeddings_2d[:, 0], pfc_embeddings_2d[:, 1], c=pfc_truth, cmap=cm.get_cmap('jet'))
     cbar = plt.colorbar()
-    plt.savefig('/work/submit/cfalor/upuppi/Ultimate-PUPPI/results/{}'.format(save_path))
+    plt.savefig(home_dir + 'results/{}'.format(save_path))
     plt.close()
 
 if __name__ == '__main__':
-    # test visualize_embeddings
+    
     # load the model
     data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
     model = "embedding_model"
@@ -69,7 +73,7 @@ if __name__ == '__main__':
     model = "embedding_GCN_cheating"
     model = "embedding_GCN_cheating_low_lr"
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
-    model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
+    model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
     epoch_num = 19

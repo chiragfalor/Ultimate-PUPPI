@@ -37,7 +37,7 @@ class Net(nn.Module):
 BATCHSIZE = 32
 start_time = time.time()
 print("Training...")
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/z_reg/train/")
+data_train = UPuppiV0("/work/submit/cfalor/upuppi/deep/train/")
 data_test = UPuppiV0("/work/submit/cfalor/upuppi/z_reg/test/")
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
                           follow_batch=['x_pfc', 'x_vtx'])

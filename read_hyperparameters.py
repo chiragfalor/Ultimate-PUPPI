@@ -5,7 +5,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-file_loc = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/hyperparameter_list.txt'
+
+with open('home_path.txt', 'r') as f:
+    home_path = f.readlines()[0].strip()
+
+file_loc = home_path + 'hyperparameter_list.txt'
 
 # open file
 with open(file_loc, 'r') as f:

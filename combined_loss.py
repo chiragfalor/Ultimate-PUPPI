@@ -16,11 +16,15 @@ from tqdm import tqdm
 
 BATCHSIZE = 64
 start_time = time.time()
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
+# load home directory path from home_path.txt
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
 
-# data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train2/")
-# data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test2/")
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
+
+# data_train = UPuppiV0(home_dir + 'train2/')
+# data_test = UPuppiV0(home_dir + 'test2/')
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -35,7 +39,7 @@ model = "modelv2_neg"
 model = "modelv2_nz199"
 model = "modelv2_nz0"
 # model = "modelv3"
-model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
+model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
 

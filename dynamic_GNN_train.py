@@ -13,8 +13,8 @@ from save_results import save_predictions
 BATCHSIZE = 32
 NUM_EPOCHS = 5
 start_time = time.time()
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test/")
+data_train = UPuppiV0('/work/submit/cfalor/upuppi/deepjet-geometric/train/')
+data_test = UPuppiV0('/work/submit/cfalor/upuppi/deepjet-geometric/test/')
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
                           follow_batch=['x_pfc', 'x_vtx'])

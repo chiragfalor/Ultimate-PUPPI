@@ -9,7 +9,9 @@ from torch import nn
 import torch
 from tqdm import tqdm
 
-
+# load the home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
 
 
 #import utils
@@ -120,7 +122,7 @@ if __name__ == "__main__":
         raise(Exception("Model not found"))
 
     upuppi = Net(pfc_input_dim=13)
-    model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
+    model_dir = home_dir + 'models/{}/'.format(model)
     model_loc = os.path.join(model_dir, 'epoch-{}.pt'.format(epoch_to_load))
     print("Saving predictions of model {}".format(model), "at epoch {}".format(epoch_to_load))
 

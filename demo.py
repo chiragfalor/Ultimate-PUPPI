@@ -12,10 +12,14 @@ from torch_geometric.data import DataLoader
 import os
 from tqdm import tqdm
 
+# get home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
+
 BATCHSIZE = 64
 start_time = time.time()
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/deepjet-geometric/test2/")
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test2/')
 # data_train = UPuppiV0("/work/submit/bmaier/upuppi/data/v0_z_regression/train/")
 # data_test = UPuppiV0("/work/submit/bmaier/upuppi/data/v0_z_regression/test/")
 #data_train = UPuppiV0("/home/yfeng/UltimatePuppi/deepjet-geometric/data/train/")

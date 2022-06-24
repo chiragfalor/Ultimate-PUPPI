@@ -7,11 +7,15 @@ from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
 import os
 
+# load the home directory path
+with open('home_path.txt', 'r') as f:
+    home_dir = f.readlines()[0].strip()
+
 BATCHSIZE = 32
 start_time = time.time()
 print("Training...")
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/z_reg/train/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/z_reg/test/")
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
 # data_train = UPuppiV0("/work/submit/bmaier/upuppi/data/v0_z_regression/train/")
 # data_test = UPuppiV0("/work/submit/bmaier/upuppi/data/v0_z_regression/test/")
 #data_train = UPuppiV0("/home/yfeng/UltimatePuppi/deepjet-geometric/data/train/")
@@ -28,7 +32,7 @@ from models.model import Net
 
 #import utils
 
-model_dir = '/work/submit/cfalor/upuppi/z_reg/models/'
+model_dir = home_dir + 'models/'
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
