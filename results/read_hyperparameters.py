@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-file_loc = '/work/submit/cfalor/upuppi/deepjet-geometric/hyperparameter_list.txt'
+file_loc = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/hyperparameter_list.txt'
 
 # open file
 with open(file_loc, 'r') as f:

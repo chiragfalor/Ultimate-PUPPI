@@ -16,11 +16,11 @@ from tqdm import tqdm
 
 BATCHSIZE = 64
 start_time = time.time()
-# data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train/")
-# data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
+data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train/")
+data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
 
-data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train2/")
-data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test2/")
+# data_train = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/train2/")
+# data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test2/")
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -31,6 +31,9 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
 model = "combined_model"
 model = "Dynamic_GATv2"
 model = "modelv2"
+model = "modelv2_neg"
+model = "modelv2_nz199"
+model = "modelv2_nz0"
 # model = "modelv3"
 model_dir = '/work/submit/cfalor/upuppi/Ultimate-PUPPI/models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
@@ -87,6 +90,20 @@ def embedding_loss(data, pfc_enc, vtx_enc):
     return total_pfc_loss + total_vtx_loss + reg_loss
 
 
+def process_data(data):
+    '''
+    Apply data processing as needed and return the processed data.
+    '''
+    
+    # switch the sign of the z coordinate of the pfc
+    # data.x_pfc[:, -1] *= -1
+    # data.y *= -1
+    neutral_indices = torch.nonzero(data.x_pfc[:,5] == 0).squeeze()
+    charged_indices = torch.nonzero(data.x_pfc[:,5] != 0).squeeze()
+    # convert z of neutral particles from -199 to 0
+    data.x_pfc[neutral_indices, -1] *= 0
+    return data
+
 
 
 
@@ -100,6 +117,7 @@ def train(c_ratio=0.05, neutral_ratio=1):
         euclidean_loss = nn.L1Loss().to(device)
         counter += 1
         data = data.to(device) 
+        data = process_data(data)
         optimizer.zero_grad()
         out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         if c_ratio > 0:
