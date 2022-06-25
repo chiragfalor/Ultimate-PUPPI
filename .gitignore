@@ -141,4 +141,8 @@ results/*.txt
 
 # homepath
 home_path.txt
-home*.txt
+
+# slurm jobs
+*.out
+*.err
+

@@ -50,7 +50,7 @@ print("Using device: ", device, torch.cuda.get_device_name(0))
 
 # create the model
 
-epoch_to_load = 20
+epoch_to_load = 40
 upuppi = Net(pfc_input_dim=13).to(device)
 optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
 model_dir = home_dir + 'models/{}/'.format(model)
@@ -177,7 +177,7 @@ def test():
     total_loss = total_loss / counter        
     return total_loss
 
-NUM_EPOCHS = 30
+NUM_EPOCHS = 5
 
 for epoch in range(epoch_to_load+1, NUM_EPOCHS+epoch_to_load+1): 
     loss = 0
