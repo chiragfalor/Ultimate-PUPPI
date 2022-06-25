@@ -26,4 +26,6 @@ with open(file_loc, 'r') as f:
     df = pd.DataFrame(list_as_dict)
     # sort by loss
     df = df.sort_values(by='loss')
+    # select where dropout is 0.25
+    df = df[df['dropout'] == 0.25]
     print(df)

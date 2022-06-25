@@ -150,11 +150,11 @@ def hyperparameter_search():
     # define the hyperparameter search space
     c_ratios = np.logspace(-3, -1, 3)
     neutral_ratios = np.linspace(1, 10, 3)
-    lr = np.logspace(-4, -1, 3)
-    hidden_dims = np.logspace(0.5, 2, 3).astype(int)
-    k1s = np.logspace(0.6, 1.7, 3).astype(int)
-    k2s = np.logspace(0.6, 1.7, 3).astype(int)
-    dropouts = np.linspace(0, 0.5, 3)
+    lr = np.logspace(-3, -1, 2)
+    hidden_dims = np.logspace(1.6, 2.5, 3).astype(int)
+    k1s = np.logspace(1.1, 2, 3).astype(int)
+    k2s = np.logspace(1.1, 2, 3).astype(int)
+    dropouts = np.linspace(0, 0.25, 3)
     optimizers = ['adam', 'sgd', 'adagrad', 'adadelta', 'rmsprop']
     # define the search space
     search_space = {'c_ratio': c_ratios, 'neutral_ratio': neutral_ratios, 'lr': lr, 'hidden_dim': hidden_dims, 'dropout': dropouts, 'optimizer': optimizers}
@@ -169,9 +169,9 @@ def hyperparameter_search():
 
     for optimizer_type in optimizers:
         for c_ratio in c_ratios:
-                for neutral_ratio in neutral_ratios:
-                    for lr in lr:
-                        for dropout in dropouts:
+                for dropout in dropouts:
+                    for neutral_ratio in neutral_ratios:
+                        for lr in lr:
                             for hidden_dim in hidden_dims:
                                 for k1 in k1s:
                                     for k2 in k2s:
