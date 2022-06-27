@@ -99,6 +99,10 @@ if __name__ == '__main__':
     # model = "combined_model"
     # model = "combined_model2"
     model = "modelv2"
+    model = "modelv2_neg"
+    model = "modelv2_nz199"
+    # model = "modelv2_nz0"
+    # model = "modelv2_orig"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
     if model == "DynamicGCN":
@@ -111,7 +115,7 @@ if __name__ == '__main__':
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model == "modelv2":
+    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig":
         from models.modelv2 import Net
     elif model == "modelv3":
         from models.modelv3 import Net
@@ -120,17 +124,19 @@ if __name__ == '__main__':
     else:
         raise(Exception("Model not found"))
 
-    test_loader = DataLoader(data_test, batch_size=320, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
+    test_loader = DataLoader(data_test, batch_size=32, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
-    epoch_num = 18
+    epoch_num = 19
     upuppi_state_dict = torch.load(model_dir + 'epoch-{}.pt'.format(epoch_num))['model']
     net = Net(pfc_input_dim=13)
     net.load_state_dict(upuppi_state_dict)
     net.eval() 
     with torch.no_grad():
         data = next(iter(test_loader))
+        neutral_indices = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
+        data.x_pfc[neutral_indices, -1] *= -1
         pfc_truth = data.y.detach().numpy()
         vtx_truth = data.x_vtx[:, 2].detach().numpy()
         out, batch, pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)

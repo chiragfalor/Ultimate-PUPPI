@@ -18,8 +18,12 @@ def process_data(data):
     """
     Process data to be used in the model.
     """
-    data.x_pfc[:,-1] *= -1
+    # data.x_pfc[:,-1] *= -1
     # data.y *= -1
+    neutral_indices = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
+    charged_indices = torch.nonzero(data.x_pfc[:,-2] != 0).squeeze()
+    # convert z of neutral particles from -199 to 0
+    data.x_pfc[neutral_indices, -1] *= 0
     return data
 
 #import utils
@@ -91,7 +95,7 @@ def save_predictions(model, data_loader, model_name):
     return df
 
 if __name__ == "__main__":
-    BATCHSIZE = 64
+    BATCHSIZE = 32
     data_test = UPuppiV0(home_dir + "test/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                             follow_batch=['x_pfc', 'x_vtx'])
@@ -105,9 +109,9 @@ if __name__ == "__main__":
     model = "combined_model"
     # model = "combined_model2"
     model = "modelv2"
-    model = "modelv2_neg"
-    # model = "modelv2_nz199"
-    # model = "modelv2_nz0"
+    # model = "modelv2_neg"
+    model = "modelv2_nz199"
+    model = "modelv2_nz0"
     # model = "modelv2_orig"
     # model = "modelv3"
     # model = "Dynamic_GATv2"

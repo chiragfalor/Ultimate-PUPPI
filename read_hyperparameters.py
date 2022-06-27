@@ -27,6 +27,6 @@ with open(file_loc, 'r') as f:
     # sort by loss
     df = df.sort_values(by='loss')
     # select where dropout is 0.25
-    df = df[df['dropout'] == 0.0]
-    df = df[df['hidden_dim'] == 100]
+    # df = df[df['dropout'] == 0.0]
+    # df = df[df['hidden_dim'] == 100]
     print(df)
