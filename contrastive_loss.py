@@ -28,6 +28,7 @@ model = "embedding_GCN"
 model = "embedding_GCN_v1"
 model = "embedding_GCN_cheating"
 model = "embedding_GCN_cheating_low_lr"
+model = "embedding_GCN_nocheating"
 model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
@@ -126,14 +127,17 @@ def train(reg_ratio = 0.01, neutral_weight = 1):
         vtx_id = (data.truth != 0).int()
         # adding in the true vertex id itself to check if model is working
         input_data = torch.cat((data.x_pfc[:,:-1], vtx_id.unsqueeze(1)), dim=1)
+        charged_idx, neutral_idx = torch.nonzero(data.x_pfc[:,11] != 0).squeeze(), torch.nonzero(data.x_pfc[:,11] == 0).squeeze()
+        # replace the vertex id of the neutral particles with 0.5
+        vtx_id[neutral_idx] = 0.5
+        input_data[neutral_idx, -1] = 0.5
         # input_data = data.x_pfc
         pfc_enc = net(input_data)
-        if neutral_weight != 1:
-            charged_idx, neutral_idx = torch.nonzero(data.x_pfc[:,11] != 0).squeeze(), torch.nonzero(data.x_pfc[:,11] == 0).squeeze()
+        if neutral_weight != 1:  
             charged_embeddings, neutral_embeddings = pfc_enc[charged_idx], pfc_enc[neutral_idx]
             charged_loss, neutral_loss = loss_fn(charged_embeddings, vtx_id[charged_idx], print_bool=False), loss_fn(neutral_embeddings, vtx_id[neutral_idx], print_bool=False)
             loss = (charged_loss + neutral_weight*neutral_loss)/(1+neutral_weight)
-            loss += loss_fn(pfc_enc, vtx_id, print_bool=False)
+            loss += loss_fn(pfc_enc, vtx_id, c=0.1, print_bool=False)
         else:
             loss = loss_fn(pfc_enc, vtx_id, c=0.1, print_bool=False)
         loss += reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean()
@@ -142,7 +146,7 @@ def train(reg_ratio = 0.01, neutral_weight = 1):
         train_loss += loss.item()
         if counter % 5000 == 1:
             print("Counter: {}, Average Loss: {}".format(counter, train_loss/counter))
-            print("Regression loss: {}".format(((torch.norm(pfc_enc, p=2, dim=1))**4).mean()))
+            print("Regularization loss: {}".format(((torch.norm(pfc_enc, p=2, dim=1))**4).mean()))
             if neutral_weight != 1:
                 print("Charged loss: {}, Neutral loss: {}".format(charged_loss, neutral_loss))
                 print("number of charged particles: {}, number of neutral particles: {}".format(len(charged_idx), len(neutral_idx)))
@@ -166,19 +170,16 @@ def test():
     return test_loss
 
 # train the model
-
-for epoch in range(20):
-    loss = 0
-    test_loss = 0
-    loss = train(reg_ratio = 0.01, neutral_weight = epoch+1)
-    state_dicts = {'model':net.state_dict(),
-                   'opt':optimizer.state_dict()} 
-    torch.save(state_dicts, os.path.join(model_dir, 'epoch-{}.pt'.format(epoch)))
-    print("Model saved at path: {}".format(os.path.join(model_dir, 'epoch-{}.pt'.format(epoch))))
-    print("Time elapsed: ", time.time() - start_time)
-    print("-----------------------------------------------------")
-    test_loss = test()
-    print("Epoch: ", epoch, " Loss: ", loss, " Test Loss: ", test_loss)
-
-    
-
+if __name__ == "__main__":
+    for epoch in range(20):
+        loss = 0
+        test_loss = 0
+        loss = train(reg_ratio = 0.01, neutral_weight = epoch+1)
+        state_dicts = {'model':net.state_dict(),
+                    'opt':optimizer.state_dict()} 
+        torch.save(state_dicts, os.path.join(model_dir, 'epoch-{}.pt'.format(epoch)))
+        print("Model saved at path: {}".format(os.path.join(model_dir, 'epoch-{}.pt'.format(epoch))))
+        print("Time elapsed: ", time.time() - start_time)
+        print("-----------------------------------------------------")
+        test_loss = test()
+        print("Epoch: ", epoch, " Loss: ", loss, " Test Loss: ", test_loss)

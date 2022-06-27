@@ -1,4 +1,4 @@
-{'c_ratio': 0.001, 'neutral_ratio': 1.0, 'lr': 0.001, 'hidden_dim': 79, 'dropout': 0.0, 'k1': 12, 'k2': 12, 'optimizer': 'adam', 'best_loss': 1371.1967177568856, 'epoch': 0, 'best_model': Net(
+{'c_ratio': 0.001, 'neutral_ratio': 1.0, 'lr': 0.001, 'hidden_dim': 79, 'dropout': 0.0, 'k1': 12, 'k2': 12, 'optimizer': 'adam', 'best_loss': 1334.9521343683793, 'epoch': 4, 'best_model': Net(
   (vtx_encode): Sequential(
     (0): Linear(in_features=4, out_features=39, bias=True)
     (1): SiLU()
