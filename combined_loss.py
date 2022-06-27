@@ -11,7 +11,7 @@ from models.modelv2 import Net
 from tqdm import tqdm
 
 
-BATCHSIZE = 64
+BATCHSIZE = 32
 start_time = time.time()
 # load home directory path from home_path.txt
 with open('home_path.txt', 'r') as f:
@@ -32,7 +32,7 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
 model = "combined_model"
 model = "Dynamic_GATv2"
 model = "modelv2"
-model = "modelv2_neg"
+# model = "modelv2_neg"
 # model = "modelv2_nz199"
 # model = "modelv2_nz0"
 # model = "modelv3"
@@ -42,13 +42,13 @@ model_dir = home_dir + 'models/{}/'.format(model)
 
 print("Training {}...".format(model))
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+# device = torch.device('cpu')
 # print the device used
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 # create the model
-upuppi = Net(pfc_input_dim=13).to(device)
-optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.01)
+upuppi = Net(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12).to(device)
+optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
 
 def embedding_loss(data, pfc_enc, vtx_enc):
     total_pfc_loss = 0
@@ -95,7 +95,7 @@ def process_data(data):
     '''
     Apply data processing as needed and return the processed data.
     '''
-    
+    return data
     # switch the sign of the z coordinate of the pfc
     data.x_pfc[:, -1] *= -1
     data.y *= -1

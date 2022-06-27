@@ -19,7 +19,7 @@ import copy
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
-BATCHSIZE = 64
+BATCHSIZE = 32
 start_time = time.time()
 data_train = UPuppiV0(home_dir + "train/")
 data_test = UPuppiV0(home_dir + "test/")
@@ -150,10 +150,10 @@ def hyperparameter_search():
     # define the hyperparameter search space
     c_ratios = np.logspace(-3, -1, 3)
     neutral_ratios = np.linspace(1, 10, 3)
-    lr = np.logspace(-3, -1, 2)
-    hidden_dims = np.logspace(1.6, 2.5, 3).astype(int)
+    lr = np.logspace(-3, -2, 2)
+    hidden_dims = np.logspace(1.9, 2.8, 3).astype(int)
     k1s = np.logspace(1.1, 2, 3).astype(int)
-    k2s = np.logspace(1.1, 2, 3).astype(int)
+    k2s = np.logspace(1.1, 1.8, 3).astype(int)
     dropouts = np.linspace(0, 0.25, 3)
     optimizers = ['adam', 'sgd', 'adagrad', 'adadelta', 'rmsprop']
     # define the search space

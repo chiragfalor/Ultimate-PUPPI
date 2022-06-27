@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 with open('home_path.txt', 'r') as f:
     home_path = f.readlines()[0].strip()
 
-file_loc = home_path + 'hyperparameter_list.txt'
+file_loc = home_path + 'hyperparameter_list_old.txt'
 
 # open file
 with open(file_loc, 'r') as f:
@@ -27,5 +27,6 @@ with open(file_loc, 'r') as f:
     # sort by loss
     df = df.sort_values(by='loss')
     # select where dropout is 0.25
-    df = df[df['dropout'] == 0.25]
+    df = df[df['dropout'] == 0.0]
+    df = df[df['hidden_dim'] == 100]
     print(df)
