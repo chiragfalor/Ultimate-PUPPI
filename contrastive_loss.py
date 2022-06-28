@@ -39,7 +39,7 @@ print("Using device: ", device, torch.cuda.get_device_name(0))
 
 # create the model
 net = Net(pfc_input_dim=13).to(device)
-optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(net.parameters(), lr=0.0001)
 
 
 def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c=1.0, print_bool=False):
@@ -73,6 +73,11 @@ def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c=1.0, print_bool=False):
 
 def contrastive_loss_v2(pfc_enc, vtx_id, c=0.5, print_bool=False):
     unique_vtx = torch.unique(vtx_id)
+    if len(unique_vtx) == 1:
+        # if there is only one vertex, return 0 and corresponding gradient
+        # print warning if there is only one vertex
+        print("Warning: there is only one vertex")
+        return 0
     mean_vtx = torch.zeros((len(unique_vtx), pfc_enc.shape[1])).to(device)
     for i, vtx in enumerate(unique_vtx):
         mean_vtx[i] = torch.mean(pfc_enc[vtx_id == vtx, :], dim=0)
@@ -87,10 +92,24 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c=0.5, print_bool=False):
     var_vtx = torch.zeros((len(unique_vtx), pfc_enc.shape[1])).to(device)
     for i, vtx in enumerate(unique_vtx):
         var_vtx[i] = torch.var(pfc_enc[vtx_id == vtx, :], dim=0)
+        # if any of the variance is nan, set it to 0
+        if torch.isnan(var_vtx[i]).any():
+            var_vtx[i] = torch.zeros(pfc_enc.shape[1]).to(device)
     loss += c*torch.mean(torch.pow(var_vtx, 2))
     # print all the losses, the loss from the different means and the loss from the variance
     if print_bool:
         print("Contrastive loss: {}, loss from vtx distance: {}, loss from variance: {}".format(loss, -torch.mean(torch.pow(euclidean_dist_vtx, 2)), c*torch.mean(torch.pow(var_vtx, 2))))
+        # if any of the loss is nan, print the data
+    if torch.isnan(loss):
+        print("Contrastive loss is nan")
+        print("pfc_enc: {}".format(pfc_enc))
+        print("vtx_id: {}".format(vtx_id))
+        print("mean_vtx: {}".format(mean_vtx))
+        print("mean_vtx_diff: {}".format(mean_vtx_diff))
+        print("euclidean_dist_vtx: {}".format(euclidean_dist_vtx))
+        print("var_vtx: {}".format(var_vtx))
+        # return 0 loss and gradient
+        return 0
     return loss
         
 
@@ -103,6 +122,7 @@ def process_batch(data):
     output:
     data: the processed data batch
     '''
+    return data
     # get the data
     x_pfc = data.x_pfc.to(device)
     # normalize z to [-1, 1]
@@ -160,11 +180,11 @@ def train(reg_ratio = 0.01, neutral_weight = 1):
 def test():
     net.eval()
     test_loss = 0
-    for counter, data in enumerate(train_loader):
+    for counter, data in enumerate(tqdm(train_loader)):
         data = data.to(device)
         pfc_enc = net(data.x_pfc)
         vtx_id = data.truth
-        loss = contrastive_loss(pfc_enc, vtx_id)
+        loss = contrastive_loss_v2(pfc_enc, vtx_id)
         test_loss += loss.item()
     test_loss = test_loss / counter
     return test_loss

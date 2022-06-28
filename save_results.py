@@ -101,7 +101,7 @@ if __name__ == "__main__":
                             follow_batch=['x_pfc', 'x_vtx'])
 
 
-    epoch_to_load = 19
+    epoch_to_load = 20
     # model = "DynamicGCN"
     # model = "GAT"
     model = "GravNetConv"
@@ -115,6 +115,7 @@ if __name__ == "__main__":
     # model = "modelv2_orig"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
+    model = "DynamicTransformer"
     if model == "DynamicGCN":
         from models.DynamicGCN import Net
     elif model == "GAT":
@@ -131,6 +132,8 @@ if __name__ == "__main__":
         from models.modelv3 import Net
     elif model == "Dynamic_GATv2":
         from models.Dynamic_GATv2 import Net
+    elif model == "DynamicTransformer":
+        from models.DynamicTransformer import Net
     else:
         raise(Exception("Model not found"))
 

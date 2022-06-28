@@ -72,6 +72,7 @@ if __name__ == '__main__':
     model = "embedding_GCN_v1"
     model = "embedding_GCN_cheating"
     model = "embedding_GCN_cheating_low_lr"
+    model = "embedding_GCN_nocheating"
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model)
 

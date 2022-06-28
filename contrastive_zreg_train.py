@@ -85,7 +85,7 @@ def train(c_ratio=0.05, neutral_ratio=1):
         optimizer.zero_grad()
         out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         if c_ratio > 0:
-            emb_loss = (1/200)*contrastive_loss_v2(pfc_enc, vtx_id, c=1, print_bool=False)
+            emb_loss = contrastive_loss_v2(pfc_enc, vtx_id, c=10)
         else:
             emb_loss = 0
         if neutral_ratio > 1:
@@ -104,8 +104,9 @@ def train(c_ratio=0.05, neutral_ratio=1):
         else:
             regression_loss = euclidean_loss(out.squeeze(), data.y)
         # print(counter)
-        if counter % 100 == 0:
+        if counter % 50 == 0:
             print("Regression loss: ", regression_loss.item(), " Embedding loss: ", emb_loss)
+            contrastive_loss_v2(pfc_enc, vtx_id, print_bool=True)
         loss = (c_ratio*emb_loss) + (1-c_ratio)*regression_loss
         loss.backward()
         optimizer.step()

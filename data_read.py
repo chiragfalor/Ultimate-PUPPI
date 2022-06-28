@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
-file = h5py.File(home_dir + 'train/raw/samples_v0_dijet_46.h5', "r")
+file = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_60.h5', "r")
 
 print("Keys:", file.keys())
 
@@ -62,41 +62,32 @@ print(pfs[9,107,:])
 # print out a sample of the data
 # print("pfs sample:", pfs[0,0:10,:])
 
-pid = pfs[:,:,6]
+pid = pfs[:,:,4]
 
 
 valid_truth_idx = truth > 0
 pid = pid[valid_truth_idx]
 z = z[valid_truth_idx]
 
-electron_idx = np.where(pid == 1)
-print("electron_idx:", electron_idx)
-z_electron = z[electron_idx]
-# plot the z-coordinate of electrons
-# mean and standard deviation of the z-coordinate of electrons
-mean_electron = np.mean(z_electron)
-std_electron = np.std(z_electron)
-print("mean_electron:", mean_electron)
-print("std_electron:", std_electron)
-plt.hist(z_electron, bins=100)
-# add mean and standard deviation of the z-coordinate of electrons to the plot
-plt.axvline(mean_electron, color='r', linestyle='dashed', linewidth=2)
-plt.axvline(mean_electron + std_electron, color='r', linestyle='dashed', linewidth=2)
-plt.axvline(mean_electron - std_electron, color='r', linestyle='dashed', linewidth=2)
-plt.title("z-coordinate of electrons")
-plt.xlabel("z-coordinate")
-plt.ylabel("count")
-# save the figure
-plt.savefig("z_electron.png")
-phi = pfs[:,:,2]
-z_input = pfs[:,:,3]
 # print(z_input[4,0:10])
 # print(z[4, 0:10])
 # print(np.min(phi))
-# print(pid.shape)
-# pid = pid.astype(int)
+print(pid.shape)
+pid = pid.astype(int)
 # # # print all unique values in the pid column
-# # print("unique pid values:", np.unique(pid))
+print("unique pid values:", np.unique(pid))
+# print the histogram of number of particles for each pid
+print("histogram of pid:", np.histogram(pid, bins=np.unique(pid)))
+charge = pfs[:,:,5]
+charge = charge[valid_truth_idx]
+charge.flatten().astype(int)
+# check if particle with negative pid have negative charge
+mask = charge[pid == 22] >= 0
+print("negative pid have negative charge:", mask)
+# print the indices of the particles with negative charge
+print("indices of particles with negative charge:", np.where(mask))
+print("charge of particles with negative charge:", pid[pid<0][mask])
+# print("charge of particles with negative pid:", charge[pid < 0])
 # vnum = vtx[:,:,-1]
 # vnum = vnum.astype(int)
 # # print("unique vnum values:", np.unique(vnum))

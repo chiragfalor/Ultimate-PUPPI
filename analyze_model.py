@@ -20,6 +20,7 @@ model = "DynamicGCN"
 # model = "GravNetConv"
 # model = "No_Encode_grav_net"
 model = "modelv2"
+model = "embedding_GCN_nocheating"
 
 # import DynamicGCN.py or GAT.py in models folder
 if model == "DynamicGCN":
@@ -32,6 +33,8 @@ elif model == "No_Encode_grav_net":
     from models.No_Encode_grav_net import Net
 elif model == "modelv2":
     from models.modelv2 import Net
+elif model == "embedding_GCN_nocheating":
+    from models.embedding_GCN import Net
 else:
     raise(Exception("Model not found"))
 
@@ -40,7 +43,7 @@ upuppi = Net()
 #import utils
 
 model_dir = home_dir + 'models/{}/'.format(model)
-epoch_to_load = 1
+epoch_to_load = 0
 model_loc = os.path.join(model_dir, 'epoch-{}.pt'.format(epoch_to_load))
 
 # load model
@@ -49,4 +52,4 @@ upuppi_state_dict = state_dicts['model']
 upuppi.load_state_dict(upuppi_state_dict)
 optim_state_dict = state_dicts['opt']
 print(upuppi_state_dict)
-print(optim_state_dict)
+# print(optim_state_dict)
