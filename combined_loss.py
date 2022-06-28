@@ -7,7 +7,7 @@ from torch_geometric.data import DataLoader
 import os
 import torch
 from torch import nn
-from models.modelv2 import Net
+from models.DynamicTransformer import Net
 from tqdm import tqdm
 
 
@@ -36,6 +36,7 @@ model = "modelv2"
 # model = "modelv2_nz199"
 # model = "modelv2_nz0"
 # model = "modelv3"
+model = "DynamicTransformer"
 model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
@@ -177,7 +178,7 @@ for epoch in range(1, NUM_EPOCHS+1):
         c_ratio = 0.05
     else:
         c_ratio=0
-    loss = train(c_ratio=c_ratio, neutral_ratio=2*epoch-1)
+    loss = train(c_ratio=c_ratio, neutral_ratio=epoch+1)
     state_dicts = {'model':upuppi.state_dict(),
                    'opt':optimizer.state_dict()} 
 
