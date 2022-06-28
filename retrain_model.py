@@ -106,8 +106,6 @@ def process_data(data):
     '''
     Apply data processing as needed and return the processed data.
     '''
-    
-    # switch the sign of the z coordinate of the pfc
     return data
     data.x_pfc[:, -1] *= -1
     data.y *= -1

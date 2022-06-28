@@ -1,26 +1,26 @@
-{'c_ratio': 0.001, 'neutral_ratio': 1.0, 'lr': 0.001, 'hidden_dim': 79, 'dropout': 0.0, 'k1': 12, 'k2': 12, 'optimizer': 'adam', 'best_loss': 1334.9521343683793, 'epoch': 4, 'best_model': Net(
+{'c_ratio': 0.001, 'neutral_ratio': 1.0, 'lr': 0.001, 'hidden_dim': 223, 'dropout': 0.0, 'k1': 35, 'k2': 63, 'optimizer': 'adam', 'best_loss': 1321.075190346928, 'epoch': 4, 'best_model': Net(
   (vtx_encode): Sequential(
-    (0): Linear(in_features=4, out_features=39, bias=True)
+    (0): Linear(in_features=4, out_features=111, bias=True)
     (1): SiLU()
-    (2): Linear(in_features=39, out_features=79, bias=True)
+    (2): Linear(in_features=111, out_features=223, bias=True)
   )
   (pfc_encode): Sequential(
-    (0): Linear(in_features=13, out_features=79, bias=True)
+    (0): Linear(in_features=13, out_features=223, bias=True)
     (1): SiLU()
-    (2): Linear(in_features=79, out_features=79, bias=True)
+    (2): Linear(in_features=223, out_features=223, bias=True)
   )
   (conv): DynamicEdgeConv(nn=Sequential(
-    (0): Linear(in_features=158, out_features=79, bias=True)
+    (0): Linear(in_features=446, out_features=223, bias=True)
     (1): SiLU()
-    (2): Linear(in_features=79, out_features=79, bias=True)
+    (2): Linear(in_features=223, out_features=223, bias=True)
   ), k=64)
   (conv2): DynamicEdgeConv(nn=Sequential(
-    (0): Linear(in_features=184, out_features=79, bias=True)
+    (0): Linear(in_features=472, out_features=223, bias=True)
     (1): SiLU()
-    (2): Linear(in_features=79, out_features=79, bias=True)
+    (2): Linear(in_features=223, out_features=223, bias=True)
   ), k=16)
   (output): Sequential(
-    (0): Linear(in_features=79, out_features=32, bias=True)
+    (0): Linear(in_features=223, out_features=32, bias=True)
     (1): SiLU()
     (2): Linear(in_features=32, out_features=4, bias=True)
     (3): SiLU()

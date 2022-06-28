@@ -19,7 +19,7 @@ import copy
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
-BATCHSIZE = 32
+BATCHSIZE = 16
 start_time = time.time()
 data_train = UPuppiV0(home_dir + "train/")
 data_test = UPuppiV0(home_dir + "test/")
@@ -175,6 +175,9 @@ def hyperparameter_search():
                             for hidden_dim in hidden_dims:
                                 for k1 in k1s:
                                     for k2 in k2s:
+                                        # to avoid retraining the models we have already trained
+                                        if (optimizer_type, c_ratio, dropout, neutral_ratio, lr) == ('adam', 0.001, 0, 1, 0.001) and hidden_dim < 500:
+                                            continue
                                         upuppi = Net(hidden_dim=hidden_dim, dropout=dropout).to(device)
                                         print("Training with: c_ratio: ", c_ratio, " neutral_ratio: ", neutral_ratio, " lr: ", lr, " hidden_dim: ", hidden_dim, " dropout: ", dropout, " k1: ", k1, " k2: ", k2, " optimizer: ", optimizer_type)
                                         # define the optimizer

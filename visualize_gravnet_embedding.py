@@ -99,8 +99,8 @@ if __name__ == '__main__':
     # model = "combined_model"
     # model = "combined_model2"
     model = "modelv2"
-    model = "modelv2_neg"
-    model = "modelv2_nz199"
+    # model = "modelv2_neg"
+    # model = "modelv2_nz199"
     # model = "modelv2_nz0"
     # model = "modelv2_orig"
     # model = "modelv3"
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     # load the model
     epoch_num = 19
     upuppi_state_dict = torch.load(model_dir + 'epoch-{}.pt'.format(epoch_num))['model']
-    net = Net(pfc_input_dim=13)
+    net = Net(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12)
     net.load_state_dict(upuppi_state_dict)
     net.eval() 
     with torch.no_grad():

@@ -23,7 +23,7 @@ def process_data(data):
     neutral_indices = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
     charged_indices = torch.nonzero(data.x_pfc[:,-2] != 0).squeeze()
     # convert z of neutral particles from -199 to 0
-    data.x_pfc[neutral_indices, -1] *= 0
+    # data.x_pfc[neutral_indices, -1] *= 0
     return data
 
 #import utils
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     # model = "combined_model2"
     model = "modelv2"
     # model = "modelv2_neg"
-    model = "modelv2_nz199"
-    model = "modelv2_nz0"
+    # model = "modelv2_nz199"
+    # model = "modelv2_nz0"
     # model = "modelv2_orig"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     else:
         raise(Exception("Model not found"))
 
-    upuppi = Net(pfc_input_dim=13)
+    upuppi = Net(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12)
     model_dir = home_dir + 'models/{}/'.format(model)
     model_loc = os.path.join(model_dir, 'epoch-{}.pt'.format(epoch_to_load))
     print("Saving predictions of model {}".format(model), "at epoch {}".format(epoch_to_load))

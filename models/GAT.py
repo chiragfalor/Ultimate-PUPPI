@@ -45,7 +45,7 @@ class Net(nn.Module):
         feats1 = F.dropout(feats1, p=self.dropout, training=self.training)
         feats2 = self.conv(x=x_pfc_enc, batch=batch_pfc)
         # add layer normalization
-        feats2 = F.layer_norm(feats2, [feats2.shape[1]])\
+        feats2 = F.layer_norm(feats2, [feats2.shape[1]])
         # dropout layer
         feats2 = F.dropout(feats2, p=self.dropout, training=self.training)
         feats = torch.cat([feats1, feats2], dim=1)
