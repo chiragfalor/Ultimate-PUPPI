@@ -7,18 +7,19 @@ from torch_geometric.data import DataLoader
 import os
 import torch
 from torch import nn
-from models.DynamicPointTransformer import Net
+# from models.DynamicPointTransformer import Net
+from models.modelv2 import Net
 from tqdm import tqdm
 
 
-BATCHSIZE = 32
+BATCHSIZE = 64
 start_time = time.time()
 # load home directory path from home_path.txt
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
-data_train = UPuppiV0(home_dir + 'train/')
-data_test = UPuppiV0(home_dir + 'test/')
+data_train = UPuppiV0(home_dir + 'train2/')
+data_test = UPuppiV0(home_dir + 'test2/')
 
 # data_train = UPuppiV0(home_dir + 'train2/')
 # data_test = UPuppiV0(home_dir + 'test2/')
@@ -35,9 +36,10 @@ model = "modelv2"
 # model = "modelv2_neg"
 # model = "modelv2_nz199"
 # model = "modelv2_nz0"
+model = "modelv2_newdata"
 # model = "modelv3"
-model = "DynamicTransformer"
-model = "DynamicPointTransformer"
+# model = "DynamicTransformer"
+# model = "DynamicPointTransformer"
 model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
@@ -49,7 +51,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 # create the model
-upuppi = Net(pfc_input_dim=13).to(device)
+upuppi = Net(pfc_input_dim=14).to(device)
 optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
 
 def embedding_loss(data, pfc_enc, vtx_enc):
@@ -179,7 +181,7 @@ for epoch in range(1, NUM_EPOCHS+1):
         c_ratio = 0.05
     else:
         c_ratio=0
-    loss = train(c_ratio=c_ratio, neutral_ratio=epoch+1)
+    loss = train(c_ratio=c_ratio, neutral_ratio=epoch)
     state_dicts = {'model':upuppi.state_dict(),
                    'opt':optimizer.state_dict()} 
 
@@ -187,8 +189,8 @@ for epoch in range(1, NUM_EPOCHS+1):
     print("Model saved")
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
-    # test_loss = test()
-    print("Epoch: ", epoch, " Loss: ", loss)
+    test_loss = test()
+    print("Epoch: ", epoch, " Loss: ", loss, " Test loss: ", test_loss)
 
     
 

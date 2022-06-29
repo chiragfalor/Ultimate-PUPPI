@@ -16,9 +16,9 @@ from tqdm import tqdm
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
-BATCHSIZE = 64
+BATCHSIZE = 1
 start_time = time.time()
-data_train = UPuppiV0(home_dir + 'train/')
+data_train = UPuppiV0(home_dir + 'train2/')
 data_test = UPuppiV0(home_dir + 'test2/')
 # data_train = UPuppiV0("/work/submit/bmaier/upuppi/data/v0_z_regression/train/")
 # data_test = UPuppiV0("/work/submit/bmaier/upuppi/data/v0_z_regression/test/")

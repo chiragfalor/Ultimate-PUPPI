@@ -14,7 +14,7 @@ from torch import optim
 from models.modelv2 import Net
 from tqdm import tqdm
 import copy
-
+import random
 # load the home directory path
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
@@ -148,74 +148,67 @@ def test(upuppi):
 
 def hyperparameter_search():
     # define the hyperparameter search space
-    c_ratios = np.logspace(-3, -1, 3)
-    neutral_ratios = np.linspace(1, 10, 3)
-    lr = np.logspace(-3, -2, 2)
-    hidden_dims = np.logspace(1.9, 2.8, 3).astype(int)
-    k1s = np.logspace(1.1, 2, 3).astype(int)
-    k2s = np.logspace(1.1, 1.8, 3).astype(int)
-    dropouts = np.linspace(0, 0.25, 3)
+    c_ratios = np.logspace(-3, -1, 5)
+    neutral_ratios = np.logspace(0, 1, 3)
+    lr = np.logspace(-4, -2, 5)
+    hidden_dims = np.logspace(1.9, 2.8, 5).astype(int)
+    k1s = np.logspace(1, 2, 5).astype(int)
+    k2s = np.logspace(1, 1.8, 5).astype(int)
+    dropouts = np.linspace(0, 0.5, 3)
     optimizers = ['adam', 'sgd', 'adagrad', 'adadelta', 'rmsprop']
     # define the search space
-    search_space = {'c_ratio': c_ratios, 'neutral_ratio': neutral_ratios, 'lr': lr, 'hidden_dim': hidden_dims, 'dropout': dropouts, 'optimizer': optimizers}
+    search_space = {'c_ratio': c_ratios, 'neutral_ratio': neutral_ratios, 'lr': lr, 'hidden_dim': hidden_dims, 'k1': k1s, 'k2': k2s, 'dropout': dropouts, 'optimizer': optimizers}
     
     
     # define a function which uses binary search to find the best hyperparameters
     # train the model
-    NUM_EPOCHS = 5
+    NUM_EPOCHS = 10
     # define the best model parameters
     best_hyperparameters = {'c_ratio': 0.05, 'neutral_ratio': 1, 'lr': 0.001, 'hidden_dim': 100, 'dropout': 0,'k1': 1, 'k2': 1, 'optimizer': 'adam','best_loss': 1000000, 'epoch': 0, 'best_model': None}
     hyperparameter_list = []
 
-    for optimizer_type in optimizers:
-        for c_ratio in c_ratios:
-                for dropout in dropouts:
-                    for neutral_ratio in neutral_ratios:
-                        for lr in lr:
-                            for hidden_dim in hidden_dims:
-                                for k1 in k1s:
-                                    for k2 in k2s:
-                                        # to avoid retraining the models we have already trained
-                                        if (optimizer_type, c_ratio, dropout, neutral_ratio, lr) == ('adam', 0.001, 0, 1, 0.001) and hidden_dim < 500:
-                                            continue
-                                        upuppi = Net(hidden_dim=hidden_dim, dropout=dropout).to(device)
-                                        print("Training with: c_ratio: ", c_ratio, " neutral_ratio: ", neutral_ratio, " lr: ", lr, " hidden_dim: ", hidden_dim, " dropout: ", dropout, " k1: ", k1, " k2: ", k2, " optimizer: ", optimizer_type)
-                                        # define the optimizer
-                                        if optimizer_type == 'adam':
-                                            optimizer = optim.Adam(upuppi.parameters(), lr=lr)
-                                        elif optimizer_type == 'sgd':
-                                            optimizer = optim.SGD(upuppi.parameters(), lr=lr)
-                                        elif optimizer_type == 'adagrad':
-                                            optimizer = optim.Adagrad(upuppi.parameters(), lr=lr)
-                                        elif optimizer_type == 'adadelta':
-                                            optimizer = optim.Adadelta(upuppi.parameters(), lr=lr)
-                                        elif optimizer_type == 'rmsprop':
-                                            optimizer = optim.RMSprop(upuppi.parameters(), lr=lr)
+    for _ in range(200):
+        # randomly sample a hyperparameter configuration
+        hyperparameter_config = {'c_ratio': random.choice(search_space['c_ratio']), 'neutral_ratio': random.choice(search_space['neutral_ratio']), 'lr': random.choice(search_space['lr']), 'hidden_dim': random.choice(search_space['hidden_dim']), 'dropout': random.choice(search_space['dropout']), 'k1': random.choice(search_space['k1']), 'k2': random.choice(search_space['k2']), 'optimizer': random.choice(search_space['optimizer'])}
+        c_ratio, neutral_ratio, lr, hidden_dim, dropout, k1, k2, optimizer_type = hyperparameter_config['c_ratio'], hyperparameter_config['neutral_ratio'], hyperparameter_config['lr'], hyperparameter_config['hidden_dim'], hyperparameter_config['dropout'], hyperparameter_config['k1'], hyperparameter_config['k2'], hyperparameter_config['optimizer']
+        upuppi = Net(hidden_dim=hidden_dim, dropout=dropout).to(device)
+        print("Training with: c_ratio: ", c_ratio, " neutral_ratio: ", neutral_ratio, " lr: ", lr, " hidden_dim: ", hidden_dim, " dropout: ", dropout, " k1: ", k1, " k2: ", k2, " optimizer: ", optimizer_type)
+        # define the optimizer
+        if optimizer_type == 'adam':
+            optimizer = optim.Adam(upuppi.parameters(), lr=lr)
+        elif optimizer_type == 'sgd':
+            optimizer = optim.SGD(upuppi.parameters(), lr=lr)
+        elif optimizer_type == 'adagrad':
+            optimizer = optim.Adagrad(upuppi.parameters(), lr=lr)
+        elif optimizer_type == 'adadelta':
+            optimizer = optim.Adadelta(upuppi.parameters(), lr=lr)
+        elif optimizer_type == 'rmsprop':
+            optimizer = optim.RMSprop(upuppi.parameters(), lr=lr)
 
-                                        # train the model
-                                        for epoch in range(NUM_EPOCHS):
-                                            print("Epoch: ", epoch)
-                                            train(optimizer, upuppi, c_ratio=c_ratio, neutral_ratio=neutral_ratio)
-                                            # test the model
-                                            test_loss = test(upuppi)
-                                            print("Test loss: ", test_loss)
-                                            hyperparameter_dict = {'c_ratio': c_ratio, 'neutral_ratio': neutral_ratio, 'lr': lr, 'hidden_dim': hidden_dim, 'dropout': dropout, 'k1': k1, 'k2': k2, 'optimizer': optimizer_type, 'loss': test_loss, 'epoch': epoch}
-                                            hyperparameter_list.append(hyperparameter_dict)
-                                            # save the list
-                                            with open('hyperparameter_list.txt', 'w') as f:
-                                                f.write(str(hyperparameter_list))
-                                            # check if the model has the best loss
-                                            if test_loss < best_hyperparameters['best_loss']:
-                                                # update the best hyperparameters dict
-                                                best_hyperparameters['c_ratio'], best_hyperparameters['neutral_ratio'], best_hyperparameters['lr'], best_hyperparameters['hidden_dim'], best_hyperparameters['dropout'], best_hyperparameters['k1'], best_hyperparameters['k2'], best_hyperparameters['optimizer'], best_hyperparameters['epoch'], best_hyperparameters['best_model'] = c_ratio, neutral_ratio, lr, hidden_dim, dropout, k1, k2, optimizer_type, epoch, upuppi
-                                                best_hyperparameters['best_loss'] = test_loss
-                                                best_model = copy.deepcopy(upuppi)
-                                                print("Best loss: ", best_hyperparameters['best_loss'], " Hyperparameters: ", best_hyperparameters)
-                                                # save the best model
-                                                torch.save(best_model.state_dict(), os.path.join(model_dir, "best_model.pt"))
-                                                # save the best model parameters
-                                                with open("best_model_parameters.txt", "w") as f:
-                                                    f.write(str(best_hyperparameters))
+        # train the model
+        for epoch in range(NUM_EPOCHS):
+            print("Epoch: ", epoch)
+            train(optimizer, upuppi, c_ratio=c_ratio, neutral_ratio=neutral_ratio)
+            # test the model
+            test_loss = test(upuppi)
+            print("Test loss: ", test_loss)
+            hyperparameter_dict = {'c_ratio': c_ratio, 'neutral_ratio': neutral_ratio, 'lr': lr, 'hidden_dim': hidden_dim, 'dropout': dropout, 'k1': k1, 'k2': k2, 'optimizer': optimizer_type, 'loss': test_loss, 'epoch': epoch}
+            hyperparameter_list.append(hyperparameter_dict)
+            # save the list
+            with open('hyperparameter_list.txt', 'w') as f:
+                f.write(str(hyperparameter_list))
+            # check if the model has the best loss
+            if test_loss < best_hyperparameters['best_loss']:
+                # update the best hyperparameters dict
+                best_hyperparameters['c_ratio'], best_hyperparameters['neutral_ratio'], best_hyperparameters['lr'], best_hyperparameters['hidden_dim'], best_hyperparameters['dropout'], best_hyperparameters['k1'], best_hyperparameters['k2'], best_hyperparameters['optimizer'], best_hyperparameters['epoch'], best_hyperparameters['best_model'] = c_ratio, neutral_ratio, lr, hidden_dim, dropout, k1, k2, optimizer_type, epoch, upuppi
+                best_hyperparameters['best_loss'] = test_loss
+                best_model = copy.deepcopy(upuppi)
+                print("Best loss: ", best_hyperparameters['best_loss'], " Hyperparameters: ", best_hyperparameters)
+                # save the best model
+                torch.save(best_model.state_dict(), os.path.join(model_dir, "best_model.pt"))
+                # save the best model parameters
+                with open("best_model_parameters.txt", "w") as f:
+                    f.write(str(best_hyperparameters))
 
 if __name__ == "__main__":
     hyperparameter_search()
