@@ -85,7 +85,7 @@ def train(c_ratio=0.05, neutral_ratio=1):
         optimizer.zero_grad()
         out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         if c_ratio > 0:
-            emb_loss = contrastive_loss_v2(pfc_enc, vtx_id, c=10)
+            emb_loss = contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2 = 10**15)
         else:
             emb_loss = 0
         if neutral_ratio > 1:

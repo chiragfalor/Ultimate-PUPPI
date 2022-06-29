@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from sklearn.decomposition import PCA
 
-from models.embedding_GCN import Net
+# from models.embedding_GCN import Net
+from models.modelv2 import Net
 import torch
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
@@ -73,11 +74,12 @@ if __name__ == '__main__':
     model = "embedding_GCN_cheating"
     model = "embedding_GCN_cheating_low_lr"
     model = "embedding_GCN_nocheating"
+    model = "modelv2_contrastive"
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
-    epoch_num = 19
+    epoch_num = 1
     upuppi_state_dict = torch.load(model_dir + 'epoch-{}.pt'.format(epoch_num))['model']
     print(upuppi_state_dict)
     net.load_state_dict(upuppi_state_dict)
@@ -89,7 +91,7 @@ if __name__ == '__main__':
         data.x_pfc = torch.cat([data.x_pfc[:,:-1], pfc_truth.unsqueeze(1)], dim=1)
         # vtx_truth = data.x_vtx[:, 2].detach().numpy()
         # pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        pfc_embeddings = net(data.x_pfc)
+        pfc_embeddings = net(data.x_pfc)[2]
         # visualize the embeddings
         neutral_idx = torch.nonzero(data.x_pfc[:,11] == 0).squeeze()
         charged_idx = torch.nonzero(data.x_pfc[:,11] != 0).squeeze()

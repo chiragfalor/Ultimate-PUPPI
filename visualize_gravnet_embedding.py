@@ -103,9 +103,10 @@ if __name__ == '__main__':
     # model = "modelv2_nz199"
     # model = "modelv2_nz0"
     # model = "modelv2_orig"
+    model = "modelv2_contrastive"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
-    model = "DynamicTransformer"
+    # model = "DynamicTransformer"
     if model == "DynamicGCN":
         from models.DynamicGCN import Net
     elif model == "GAT":
@@ -116,7 +117,7 @@ if __name__ == '__main__':
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig":
+    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive":
         from models.modelv2 import Net
     elif model == "modelv3":
         from models.modelv3 import Net
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
-    epoch_num = 19
+    epoch_num = 1
     upuppi_state_dict = torch.load(model_dir + 'epoch-{}.pt'.format(epoch_num))['model']
     net = Net(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12)
     net.load_state_dict(upuppi_state_dict)
@@ -149,7 +150,7 @@ if __name__ == '__main__':
         # neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
         # pfc_embeddings = pfc_embeddings[neutral_idx, :]
         # pfc_truth = pfc_truth[neutral_idx]
-        visualize_embeddings(pfc_embeddings.cpu().numpy(), vtx_embeddings.cpu().numpy(), pfc_truth, vtx_truth, '{}_{}_embeddings.png'.format(model, epoch_num))
+        # visualize_embeddings(pfc_embeddings.cpu().numpy(), vtx_embeddings.cpu().numpy(), pfc_truth, vtx_truth, '{}_{}_embeddings.png'.format(model, epoch_num))
         # distinguish neutral and charged embeddings
         distinguish_neutral_charged_embeddings(pfc_embeddings.cpu().numpy(), pfc_truth, 'vis_nc_emb_{}_{}.png'.format(model, epoch_num), data.x_pfc)
 

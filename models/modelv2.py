@@ -50,7 +50,7 @@ class Net(nn.Module):
         # dropout layer
         concat_feats = F.dropout(concat_feats, p=self.dropout, training=self.training)
         # get charged PFs
-        charged_idx = torch.nonzero(x_pfc[:,11] != 0).squeeze()
+        charged_idx = torch.nonzero(x_pfc[:,-2] != 0).squeeze()
         # select charged PFs in feats1
         charged_feats1 = concat_feats[charged_idx]
         charged_batch = batch[charged_idx]

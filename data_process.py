@@ -31,8 +31,9 @@ for fileid in range(1, 10):
         # print the error
         print("fileid:", fileid)
         continue
-    except:
-        print("error")
+    except OSError as e:
+        print("fileid:", fileid)
+        print(e)
         continue
     # copy the header from the original file
     for key in file.keys():

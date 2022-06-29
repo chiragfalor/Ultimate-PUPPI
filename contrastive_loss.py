@@ -71,7 +71,7 @@ def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c=1.0, print_bool=False):
         print("Contrastive loss: {}, loss from particles: {}".format(loss, torch.mean(mask*torch.pow(euclidean_dist, 2))))
     return loss
 
-def contrastive_loss_v2(pfc_enc, vtx_id, c=0.5, print_bool=False):
+def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, print_bool=False):
     unique_vtx = torch.unique(vtx_id)
     if len(unique_vtx) == 1:
         # if there is only one vertex, return 0 and corresponding gradient
@@ -87,7 +87,7 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c=0.5, print_bool=False):
         mean_vtx_diff[i] = torch.mean(pfc_enc[vtx_id != vtx, :], dim=0)
     # get the distance between the mean of the particles of the same vertex and the mean of the particles of the different vertex
     euclidean_dist_vtx = F.pairwise_distance(mean_vtx, mean_vtx_diff)
-    loss = -torch.mean(torch.pow(euclidean_dist_vtx, 2))
+    loss = -c2*torch.mean(torch.pow(euclidean_dist_vtx, 2))
     # add variance of the particles of the same vertex
     var_vtx = torch.zeros((len(unique_vtx), pfc_enc.shape[1])).to(device)
     for i, vtx in enumerate(unique_vtx):
@@ -95,10 +95,10 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c=0.5, print_bool=False):
         # if any of the variance is nan, set it to 0
         if torch.isnan(var_vtx[i]).any():
             var_vtx[i] = torch.zeros(pfc_enc.shape[1]).to(device)
-    loss += c*torch.mean(torch.pow(var_vtx, 2))
+    loss += c1*torch.mean(torch.pow(var_vtx, 2))
     # print all the losses, the loss from the different means and the loss from the variance
     if print_bool:
-        print("Contrastive loss: {}, loss from vtx distance: {}, loss from variance: {}".format(loss, -torch.mean(torch.pow(euclidean_dist_vtx, 2)), c*torch.mean(torch.pow(var_vtx, 2))))
+        print("Contrastive loss: {}, loss from vtx distance: {}, loss from variance: {}".format(loss, -c2*torch.mean(torch.pow(euclidean_dist_vtx, 2)), c1*torch.mean(torch.pow(var_vtx, 2))))
         # if any of the loss is nan, print the data
     if torch.isnan(loss):
         print("Contrastive loss is nan")
