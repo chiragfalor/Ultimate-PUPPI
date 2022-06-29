@@ -19,6 +19,11 @@ import random
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
+# set random seeds
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
+
 BATCHSIZE = 16
 start_time = time.time()
 data_train = UPuppiV0(home_dir + "train/")
@@ -90,8 +95,6 @@ def embedding_loss(data, pfc_enc, vtx_enc):
 
 
 
-
-
 def train(optimizer, upuppi, c_ratio=0.05, neutral_ratio=1):
     upuppi.train()
     counter = 0
@@ -149,7 +152,7 @@ def test(upuppi):
 def hyperparameter_search():
     # define the hyperparameter search space
     c_ratios = np.logspace(-3, -1, 5)
-    neutral_ratios = np.logspace(0, 1, 3)
+    neutral_ratios = np.logspace(0, 1, 3).astype(int)
     lr = np.logspace(-4, -2, 5)
     hidden_dims = np.logspace(1.9, 2.8, 5).astype(int)
     k1s = np.logspace(1, 2, 5).astype(int)

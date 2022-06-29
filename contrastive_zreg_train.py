@@ -85,7 +85,7 @@ def train(c_ratio=0.05, neutral_ratio=1):
         optimizer.zero_grad()
         out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         if c_ratio > 0:
-            emb_loss = contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2 = 10**15)
+            emb_loss = contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2 = 0.1)
         else:
             emb_loss = 0
         if neutral_ratio > 1:
@@ -150,8 +150,8 @@ for epoch in range(1, NUM_EPOCHS+1):
     print("Model saved")
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
-    # test_loss = test()
-    print("Epoch: ", epoch, " Loss: ", loss)
+    test_loss = test()
+    print("Epoch: ", epoch, " Loss: ", loss, " Test loss: ", test_loss)
 
     
 

@@ -75,11 +75,12 @@ if __name__ == '__main__':
     model = "embedding_GCN_cheating_low_lr"
     model = "embedding_GCN_nocheating"
     model = "modelv2_contrastive"
+    model = "DynamicTranformer"
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
-    epoch_num = 1
+    epoch_num = 19
     upuppi_state_dict = torch.load(model_dir + 'epoch-{}.pt'.format(epoch_num))['model']
     print(upuppi_state_dict)
     net.load_state_dict(upuppi_state_dict)

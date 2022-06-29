@@ -34,7 +34,7 @@ def visualize_embeddings(pfc_embeddings, vtx_embeddings, pfc_truth, vtx_truth, s
     embeddings_2d = pca.fit_transform(embeddings)
     # separate the embeddings of particles and vertices
     pfc_embeddings_2d = embeddings_2d[:pfc_embeddings.shape[0]]
-    vtx_embeddings_2d = embeddings_2d[pfc_embeddings.shape[0]:]
+    # vtx_embeddings_2d = embeddings_2d[pfc_embeddings.shape[0]:]
     # plot the embeddings
     fig, ax = plt.subplots()
     # plot the particles
@@ -42,7 +42,7 @@ def visualize_embeddings(pfc_embeddings, vtx_embeddings, pfc_truth, vtx_truth, s
     plt.scatter(pfc_embeddings_2d[:, 0], pfc_embeddings_2d[:, 1], c=pfc_truth, cmap=cm.get_cmap('jet'))
     cbar = plt.colorbar()
     # plot the vertices
-    plt.scatter(vtx_embeddings_2d[:, 0], vtx_embeddings_2d[:, 1], c=vtx_truth, cmap=cm.get_cmap('jet'), marker='*', s=100)
+    # plt.scatter(vtx_embeddings_2d[:, 0], vtx_embeddings_2d[:, 1], c=vtx_truth, cmap=cm.get_cmap('jet'), marker='*', s=100)
     # the color of vertices is index
     # add colorbar
     # save the plot
@@ -106,7 +106,8 @@ if __name__ == '__main__':
     model = "modelv2_contrastive"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
-    # model = "DynamicTransformer"
+    model = "DynamicTransformer"
+    model = "DynamicPointTransformer"
     if model == "DynamicGCN":
         from models.DynamicGCN import Net
     elif model == "GAT":
@@ -125,6 +126,8 @@ if __name__ == '__main__':
         from models.Dynamic_GATv2 import Net
     elif model == "DynamicTransformer":
         from models.DynamicTransformer import Net
+    elif model == "DynamicPointTransformer":
+        from models.DynamicPointTransformer import Net
     else:
         raise(Exception("Model not found"))
 
@@ -132,9 +135,9 @@ if __name__ == '__main__':
     model_dir = home_dir + 'models/{}/'.format(model)
 
     # load the model
-    epoch_num = 1
+    epoch_num = 19
     upuppi_state_dict = torch.load(model_dir + 'epoch-{}.pt'.format(epoch_num))['model']
-    net = Net(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12)
+    net = Net(pfc_input_dim=13)
     net.load_state_dict(upuppi_state_dict)
     net.eval() 
     with torch.no_grad():
@@ -150,7 +153,7 @@ if __name__ == '__main__':
         # neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
         # pfc_embeddings = pfc_embeddings[neutral_idx, :]
         # pfc_truth = pfc_truth[neutral_idx]
-        # visualize_embeddings(pfc_embeddings.cpu().numpy(), vtx_embeddings.cpu().numpy(), pfc_truth, vtx_truth, '{}_{}_embeddings.png'.format(model, epoch_num))
+        visualize_embeddings(pfc_embeddings.cpu().numpy(), vtx_embeddings.cpu().numpy(), pfc_truth, vtx_truth, '{}_{}_embeddings.png'.format(model, epoch_num))
         # distinguish neutral and charged embeddings
         distinguish_neutral_charged_embeddings(pfc_embeddings.cpu().numpy(), pfc_truth, 'vis_nc_emb_{}_{}.png'.format(model, epoch_num), data.x_pfc)
 

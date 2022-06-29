@@ -91,10 +91,18 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, print_bool=False):
     # add variance of the particles of the same vertex
     var_vtx = torch.zeros((len(unique_vtx), pfc_enc.shape[1])).to(device)
     for i, vtx in enumerate(unique_vtx):
-        var_vtx[i] = torch.var(pfc_enc[vtx_id == vtx, :], dim=0)
+        if len(pfc_enc[vtx_id == vtx, :]) > 1:
+            var_vtx[i] = torch.var(pfc_enc[vtx_id == vtx, :], dim=0)
+        else:
+            var_vtx[i] = 0
+        # var_vtx[i] = torch.var(pfc_enc[vtx_id == vtx, :], dim=0) + 1e-6
         # if any of the variance is nan, set it to 0
-        if torch.isnan(var_vtx[i]).any():
-            var_vtx[i] = torch.zeros(pfc_enc.shape[1]).to(device)
+        # if torch.isnan(var_vtx[i]).any():
+        #     print(i)
+        #     print("vtx_id: {}".format(vtx_id))
+        #     print("var_vtx: {}".format(var_vtx[i]))
+        #     var_vtx[i][torch.isnan(var_vtx[i])] = 0
+        #     print("Warning: variance is nan")
     loss += c1*torch.mean(torch.pow(var_vtx, 2))
     # print all the losses, the loss from the different means and the loss from the variance
     if print_bool:
@@ -108,6 +116,7 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, print_bool=False):
         print("mean_vtx_diff: {}".format(mean_vtx_diff))
         print("euclidean_dist_vtx: {}".format(euclidean_dist_vtx))
         print("var_vtx: {}".format(var_vtx))
+        raise(ValueError)
         # return 0 loss and gradient
         return 0
     return loss
@@ -144,22 +153,39 @@ def train(reg_ratio = 0.01, neutral_weight = 1):
         data = data.to(device)
         # data = process_batch(data)
         optimizer.zero_grad()
-        vtx_id = (data.truth != 0).int()
+        # vtx_id = (data.truth != 0).int()
+        vtx_id = data.truth.int()
         # adding in the true vertex id itself to check if model is working
         input_data = torch.cat((data.x_pfc[:,:-1], vtx_id.unsqueeze(1)), dim=1)
         charged_idx, neutral_idx = torch.nonzero(data.x_pfc[:,11] != 0).squeeze(), torch.nonzero(data.x_pfc[:,11] == 0).squeeze()
         # replace the vertex id of the neutral particles with 0.5
-        vtx_id[neutral_idx] = 0.5
-        input_data[neutral_idx, -1] = 0.5
+        # vtx_id[neutral_idx] = 0.5
+        # input_data[neutral_idx, -1] = 0.5
         # input_data = data.x_pfc
         pfc_enc = net(input_data)
+        # print(net.state_dict())
+        # if pfc enc is nan, print the data
+        if torch.isnan(pfc_enc).any():
+            print(old_state_dict)
+            print("pfc_enc is nan")
+            print("pfc_enc: {}".format(pfc_enc))
+            print("input_data: {}".format(input_data))
+            print("charged_idx: {}".format(charged_idx))
+            print("neutral_idx: {}".format(neutral_idx))
+            print("data.x_pfc: {}".format(data.x_pfc))
+            print("data.truth: {}".format(data.truth))
+            # print model parameters
+            print("net.state_dict(): {}".format(net.state_dict()))
+            print("net.named_parameters(): {}".format(net.named_parameters()))
+            raise(ValueError("pfc_enc is nan"))
+        old_state_dict = net.state_dict()
         if neutral_weight != 1:  
             charged_embeddings, neutral_embeddings = pfc_enc[charged_idx], pfc_enc[neutral_idx]
             charged_loss, neutral_loss = loss_fn(charged_embeddings, vtx_id[charged_idx], print_bool=False), loss_fn(neutral_embeddings, vtx_id[neutral_idx], print_bool=False)
             loss = (charged_loss + neutral_weight*neutral_loss)/(1+neutral_weight)
-            loss += loss_fn(pfc_enc, vtx_id, c=0.1, print_bool=False)
+            loss += loss_fn(pfc_enc, vtx_id, c1=0.1, print_bool=False)
         else:
-            loss = loss_fn(pfc_enc, vtx_id, c=0.1, print_bool=False)
+            loss = loss_fn(pfc_enc, vtx_id, c1=0.1, print_bool=False)
         loss += reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean()
         loss.backward()
         optimizer.step()
@@ -171,7 +197,7 @@ def train(reg_ratio = 0.01, neutral_weight = 1):
                 print("Charged loss: {}, Neutral loss: {}".format(charged_loss, neutral_loss))
                 print("number of charged particles: {}, number of neutral particles: {}".format(len(charged_idx), len(neutral_idx)))
             # loss = contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c=0.1, print_bool=True)
-            loss = loss_fn(pfc_enc, vtx_id, c=0.1, print_bool=True)
+            loss = loss_fn(pfc_enc, vtx_id, c1=0.1, print_bool=True)
     train_loss = train_loss/counter
     return train_loss
 
