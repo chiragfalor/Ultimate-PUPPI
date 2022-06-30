@@ -1,22 +1,43 @@
-# pyright: reportMissingModuleSource=false
 
 import time
-#sys.path.append('/home/yfeng/UltimatePuppi/Ultimate-PUPPI/')
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
 import os
 import torch
 from torch import nn
-from models.DynamicPointTransformer import Net
+# from models.DynamicPointTransformer import Net
 # from models.modelv2 import Net
+from loss_functions import embedding_loss
+from helper_functions import home_dir, get_neural_net
 from tqdm import tqdm
 
 
 BATCHSIZE = 64
 start_time = time.time()
-# load home directory path from home_path.txt
-with open('home_path.txt', 'r') as f:
-    home_dir = f.readlines()[0].strip()
+
+model = "combined_model"
+model = "Dynamic_GATv2"
+model = "modelv2"
+# model = "modelv2_neg"
+# model = "modelv2_nz199"
+# model = "modelv2_nz0"
+model = "modelv2_newdata"
+# model = "modelv3"
+# model = "DynamicTransformer"
+model = "DynamicPointTransformer"
+
+model_dir = home_dir + 'models/{}/'.format(model)
+
+
+print("Training {}...".format(model))
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
+print("Using device: ", device, torch.cuda.get_device_name(0))
+
+# create the model
+upuppi = get_neural_net(model)(pfc_input_dim=13, k1=32, k2=8, dropout=0).to(device)
+optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
+
 
 data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
@@ -29,70 +50,6 @@ train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
                           follow_batch=['x_pfc', 'x_vtx'])
 test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                          follow_batch=['x_pfc', 'x_vtx'])
-
-model = "combined_model"
-model = "Dynamic_GATv2"
-model = "modelv2"
-# model = "modelv2_neg"
-# model = "modelv2_nz199"
-# model = "modelv2_nz0"
-model = "modelv2_newdata"
-# model = "modelv3"
-# model = "DynamicTransformer"
-model = "DynamicPointTransformer"
-model_dir = home_dir + 'models/{}/'.format(model)
-#model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
-
-
-print("Training {}...".format(model))
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = torch.device('cpu')
-# print the device used
-print("Using device: ", device, torch.cuda.get_device_name(0))
-
-# create the model
-upuppi = Net(pfc_input_dim=13, k1=32, k2=8, dropout=0).to(device)
-optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
-
-def embedding_loss(data, pfc_enc, vtx_enc):
-    total_pfc_loss = 0
-    total_vtx_loss = 0
-    reg_loss = 0
-    euclidean_loss = nn.MSELoss().to(device)
-    batch_size = data.x_pfc_batch.max().item() + 1
-    for i in range(batch_size):
-        # get the batch index of the current batch
-        pfc_indices = (data.x_pfc_batch == i)
-        vtx_indices = (data.x_vtx_batch == i)
-        # get the embedding of the pfc, vtx, and truth in the current batch
-        pfc_enc_batch = pfc_enc[pfc_indices, :]
-        vtx_enc_batch = vtx_enc[vtx_indices, :]
-        truth_batch = data.truth[pfc_indices].to(dtype=torch.int64, device=device)
-        # take out particles which have corresponding vertices
-        valid_pfc = (truth_batch >= 0)
-        truth_batch = truth_batch[valid_pfc]
-        pfc_enc_batch = pfc_enc_batch[valid_pfc, :]
-        # the true encoding is the embedding of the true vertex
-        vertex_encoding = vtx_enc_batch[truth_batch, :]
-        # calculate loss between pfc encoding and vertex encoding
-        pfc_loss = 0.5*euclidean_loss(pfc_enc_batch, vertex_encoding)
-        total_pfc_loss += pfc_loss
-
-        if i//10 == 0:
-            random_indices = torch.randperm(len(truth_batch))[:30]
-            random_vtx_encoding = vertex_encoding[random_indices, :]
-            for j in range(len(random_vtx_encoding)):
-                for k in range(j+1, len(random_vtx_encoding)):
-                    vtx_loss = -0.01*euclidean_loss(random_vtx_encoding[j, :], random_vtx_encoding[k, :])
-                    total_vtx_loss += vtx_loss
-        else:
-            continue
-            
-            # regularize the whole embedding to keep it normalized
-    reg_loss = ((torch.norm(vtx_enc, p=2, dim=1)/10)**6).mean()
-    # print the losses
-    # print("Pfc loss: ", total_pfc_loss.item(), " Vtx loss: ", total_vtx_loss.item(), " Reg loss: ", reg_loss.item())
-    return total_pfc_loss + total_vtx_loss + reg_loss
 
 
 def process_data(data):
@@ -126,7 +83,7 @@ def train(c_ratio=0.05, neutral_ratio=1):
         optimizer.zero_grad()
         out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         if c_ratio > 0:
-            emb_loss = (1/200)*embedding_loss(data, pfc_enc, vtx_enc)
+            emb_loss = embedding_loss(data, pfc_enc, vtx_enc, pfc_batch=data.x_pfc_batch, vtx_batch=data.x_vtx_batch)
         else:
             emb_loss = 0
         if neutral_ratio > 1:

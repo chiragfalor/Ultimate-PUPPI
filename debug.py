@@ -8,6 +8,8 @@ from torch_geometric.data import DataLoader
 np.random.seed(0)
 torch.manual_seed(40)
 
+# file for debugging tests
+
 # get home directory path
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()

@@ -5,7 +5,7 @@ from torch_geometric.nn.conv import DynamicEdgeConv
 
 
 class Net(nn.Module):
-    def __init__(self, hidden_dim = 16, pfc_input_dim = 13, dropout = 0.5):
+    def __init__(self, hidden_dim = 16, pfc_input_dim = 13, dropout = 0.5, k1 = 16, k2 = 8):
         super(Net, self).__init__()
         
         
@@ -20,7 +20,7 @@ class Net(nn.Module):
         )
 
         self.graph_conv = DynamicEdgeConv(nn=nn.Sequential(nn.Linear(2*hidden_dim, hidden_dim), nn.SiLU()),
-                k=8, aggr='mean')
+                k=k1, aggr='mean')
         self.ffn = nn.Sequential(
             nn.Linear(hidden_dim, 2*hidden_dim),
             nn.SiLU(),

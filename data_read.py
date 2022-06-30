@@ -1,9 +1,13 @@
 import h5py
 import sys
+import time
 # import awkward as ak
 import numpy as np
 import matplotlib.pyplot as plt
+from upuppi_v0_dataset import UPuppiV0
+from torch_geometric.data import DataLoader
 
+from tqdm import tqdm
 # import uproot as uproot
 # import smear_chargedhadrons as sch
 # from awkward import Array
@@ -29,7 +33,7 @@ events = file
 # truth: The true vertex where the particle was produced. Contains the vertex id from 1-200
 # truth_shape: (1000, 7000)
 # vtx: The coordinates of the vertices of the event
-# vtx_shape: (1000, 200, 4)tr
+# vtx_shape: (1000, 200, 4)
 # x, y, z, #particles for vtx
 # vtx_truthidx: lists out indices which are actually vertices, otherwise 0
 # vtx_truthidx_shape: (1000, 200)
@@ -80,51 +84,29 @@ pid = pid.astype(int)
 print("unique pid values:", np.unique(pid))
 # print the histogram of number of particles for each pid
 print("histogram of pid:", np.histogram(pid, bins=np.unique(pid)))
-# charge = pfs[:,:,5]
-# charge = charge[valid_truth_idx]
-# charge.flatten().astype(int)
-# # check if particle with negative pid have negative charge
-# mask = charge[pid == 22] >= 0
-# print("negative pid have negative charge:", mask)
-# # print the indices of the particles with negative charge
-# print("indices of particles with negative charge:", np.where(mask))
-# print("charge of particles with negative charge:", pid[pid<0][mask])
-# print("charge of particles with negative pid:", charge[pid < 0])
-# vnum = vtx[:,:,-1]
-# vnum = vnum.astype(int)
-# # print("unique vnum values:", np.unique(vnum))
-# # # pid has the following values: unique pid values: [-13   0   1   2   3   4  13]
-# # # print the number of particles with each pid
-# # pid_flat = pid.flatten()
-# # # add 13 to the pid to get the correct pid
-# # pid_flat = pid_flat + 13
-# # print("number of particles with each pid:", np.bincount(pid_flat))
-# # maxpid = pid[27,343]
-# # print("Max pid:", maxpid)
-# # print("vtx shape:", vtx.shape)
-# # print("z shape:", z.shape)
-# # print(pfs[27,343,:])
-# # print(z.shape)
-# z = z[valid_truth_idx]
-# z_input = z_input[valid_truth_idx]
-# # print(z.shape)
-# # flatten the z
-# z = z.flatten()
-# # remove 0 values from z
-# z = z.astype(float)
-# # # plot the z-coordinate of the particles
-# z_input = z_input.flatten()
-# # print(z_input[4000:4100])
-# plt.hist(z, bins=100)
-# plt.savefig("z_hist.png")
-# plt.close()
-# # flatten truth
-# truth_flat = truth.flatten()
-# # add 1 to the truth to get the correct truth
-# truth_flat = truth_flat
-# truth_flat = truth_flat.astype(int)
-# # print unique values in the truth column
-# # print("unique truth values:", np.unique(truth_flat))
-# # print("number of particles with each truth:", np.bincount(truth_flat))
 
-       
+BATCHSIZE = 1
+start_time = time.time()
+data_train = UPuppiV0(home_dir + 'train2/')
+data_test = UPuppiV0(home_dir + 'test2/')
+
+print(data_train)
+print(data_test)
+
+
+print(type(data_train))
+
+
+data_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
+
+# print 5 random samples from the dataset
+
+for batch_idx, data in enumerate(tqdm(data_loader)):
+    print(data)
+    print(data.x_pfc.shape)
+    print(data.x_vtx)
+    print(data.x_pfc_batch)
+    print(data.y)
+    print(batch_idx)
+    if batch_idx == 5:
+        break

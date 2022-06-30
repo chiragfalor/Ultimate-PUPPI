@@ -7,10 +7,10 @@ from torch_geometric.data import DataLoader
 import os
 import torch
 from torch import nn
-from models.modelv2 import Net
+# from models.modelv2 import Net
 from tqdm import tqdm
 from contrastive_loss import contrastive_loss, contrastive_loss_v2
-
+from helper_functions import get_neural_net
 
 BATCHSIZE = 32
 start_time = time.time()
@@ -39,7 +39,7 @@ model = "modelv2"
 # model = "modelv3"
 model = "modelv2_contrastive"
 model_dir = home_dir + 'models/{}/'.format(model)
-#model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
+
 
 
 print("Training {}...".format(model))
@@ -49,7 +49,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 # create the model
-upuppi = Net(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12).to(device)
+upuppi = get_neural_net(model)(pfc_input_dim=13, hidden_dim=256, k1 = 64, k2 = 12).to(device)
 optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
 
 

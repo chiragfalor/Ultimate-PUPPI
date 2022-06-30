@@ -87,6 +87,8 @@ def get_neural_net(model_name):
         from models.DynamicTransformer import Net
     elif model == "DynamicPointTransformer":
         from models.DynamicPointTransformer import Net
+    elif model == "embedding_GCN" or model == "embedding_GCN_allvtx" or model == "embedding_GCN_nocheating":
+        from models.embedding_GCN import Net
     else:
         raise(Exception("Model not found"))
     return Net

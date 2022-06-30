@@ -5,6 +5,7 @@ from torch_geometric.data import DataLoader
 import os
 import torch
 from tqdm import tqdm
+from helper_functions import get_neural_net
 
 BATCHSIZE = 32
 
@@ -22,23 +23,9 @@ model = "DynamicGCN"
 model = "modelv2"
 model = "embedding_GCN_nocheating"
 
-# import DynamicGCN.py or GAT.py in models folder
-if model == "DynamicGCN":
-    from models.DynamicGCN import Net
-elif model == "GAT":
-    from models.GAT import Net
-elif model == "GravNetConv":
-    from models.GravNetConv import Net
-elif model == "No_Encode_grav_net":
-    from models.No_Encode_grav_net import Net
-elif model == "modelv2":
-    from models.modelv2 import Net
-elif model == "embedding_GCN_nocheating":
-    from models.embedding_GCN import Net
-else:
-    raise(Exception("Model not found"))
 
-upuppi = Net()
+
+upuppi = get_neural_net(model)()
 
 #import utils
 

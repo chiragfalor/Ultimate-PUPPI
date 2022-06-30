@@ -138,6 +138,7 @@ test2/
 # predictions
 results/*.csv
 results/*.txt
+results/old_results/*.csv
 
 # homepath
 home_path.txt
