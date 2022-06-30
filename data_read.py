@@ -50,7 +50,9 @@ z = events["z"][:]
 
 truth = events["truth"][:]
 # max of truth
-max_truth = np.max(truth)
+print(truth.shape)
+max_truth = np.max(truth, axis=1)
+print(max_truth.shape)
 print("max_truth:", max_truth)
 # print out the shape of the data
 print("pfs shape:", pfs.shape)
@@ -78,15 +80,15 @@ pid = pid.astype(int)
 print("unique pid values:", np.unique(pid))
 # print the histogram of number of particles for each pid
 print("histogram of pid:", np.histogram(pid, bins=np.unique(pid)))
-charge = pfs[:,:,5]
-charge = charge[valid_truth_idx]
-charge.flatten().astype(int)
-# check if particle with negative pid have negative charge
-mask = charge[pid == 22] >= 0
-print("negative pid have negative charge:", mask)
-# print the indices of the particles with negative charge
-print("indices of particles with negative charge:", np.where(mask))
-print("charge of particles with negative charge:", pid[pid<0][mask])
+# charge = pfs[:,:,5]
+# charge = charge[valid_truth_idx]
+# charge.flatten().astype(int)
+# # check if particle with negative pid have negative charge
+# mask = charge[pid == 22] >= 0
+# print("negative pid have negative charge:", mask)
+# # print the indices of the particles with negative charge
+# print("indices of particles with negative charge:", np.where(mask))
+# print("charge of particles with negative charge:", pid[pid<0][mask])
 # print("charge of particles with negative pid:", charge[pid < 0])
 # vnum = vtx[:,:,-1]
 # vnum = vnum.astype(int)

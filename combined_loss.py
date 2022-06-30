@@ -7,8 +7,8 @@ from torch_geometric.data import DataLoader
 import os
 import torch
 from torch import nn
-# from models.DynamicPointTransformer import Net
-from models.modelv2 import Net
+from models.DynamicPointTransformer import Net
+# from models.modelv2 import Net
 from tqdm import tqdm
 
 
@@ -18,8 +18,8 @@ start_time = time.time()
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
-data_train = UPuppiV0(home_dir + 'train2/')
-data_test = UPuppiV0(home_dir + 'test2/')
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
 
 # data_train = UPuppiV0(home_dir + 'train2/')
 # data_test = UPuppiV0(home_dir + 'test2/')
@@ -39,7 +39,7 @@ model = "modelv2"
 model = "modelv2_newdata"
 # model = "modelv3"
 # model = "DynamicTransformer"
-# model = "DynamicPointTransformer"
+model = "DynamicPointTransformer"
 model_dir = home_dir + 'models/{}/'.format(model)
 #model_dir = '/home/yfeng/UltimatePuppi/deepjet-geometric/models/v0/'
 
@@ -51,7 +51,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 # create the model
-upuppi = Net(pfc_input_dim=14).to(device)
+upuppi = Net(pfc_input_dim=13, k1=32, k2=8, dropout=0).to(device)
 optimizer = torch.optim.Adam(upuppi.parameters(), lr=0.001)
 
 def embedding_loss(data, pfc_enc, vtx_enc):

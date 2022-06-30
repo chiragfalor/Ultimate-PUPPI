@@ -101,7 +101,7 @@ if __name__ == "__main__":
                             follow_batch=['x_pfc', 'x_vtx'])
 
 
-    epoch_to_load = 18
+    epoch_to_load = 20
     # model = "DynamicGCN"
     # model = "GAT"
     model = "GravNetConv"
@@ -113,10 +113,12 @@ if __name__ == "__main__":
     # model = "modelv2_nz199"
     # model = "modelv2_nz0"
     # model = "modelv2_orig"
+    model = "modelv2_newdata"
+    model = "modelv2_contrastive"
     # model = "modelv3"
     # model = "Dynamic_GATv2"
-    model = "DynamicTransformer"
-    model = "DynamicPointTransformer"
+    # model = "DynamicTransformer"
+    # model = "DynamicPointTransformer"
     if model == "DynamicGCN":
         from models.DynamicGCN import Net
     elif model == "GAT":
@@ -127,7 +129,7 @@ if __name__ == "__main__":
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig":
+    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model == "modelv2_newdata" or model == "modelv2_contrastive":
         from models.modelv2 import Net
     elif model == "modelv3":
         from models.modelv3 import Net
@@ -140,7 +142,7 @@ if __name__ == "__main__":
     else:
         raise(Exception("Model not found"))
 
-    upuppi = Net(pfc_input_dim=13)
+    upuppi = Net(pfc_input_dim=13, hidden_dim=256, k1=32, k2=12)
     model_dir = home_dir + 'models/{}/'.format(model)
     model_loc = os.path.join(model_dir, 'epoch-{}.pt'.format(epoch_to_load))
     print("Saving predictions of model {}".format(model), "at epoch {}".format(epoch_to_load))

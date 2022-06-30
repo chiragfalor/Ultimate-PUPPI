@@ -95,19 +95,9 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, print_bool=False):
             var_vtx[i] = torch.var(pfc_enc[vtx_id == vtx, :], dim=0)
         else:
             var_vtx[i] = 0
-        # var_vtx[i] = torch.var(pfc_enc[vtx_id == vtx, :], dim=0) + 1e-6
-        # if any of the variance is nan, set it to 0
-        # if torch.isnan(var_vtx[i]).any():
-        #     print(i)
-        #     print("vtx_id: {}".format(vtx_id))
-        #     print("var_vtx: {}".format(var_vtx[i]))
-        #     var_vtx[i][torch.isnan(var_vtx[i])] = 0
-        #     print("Warning: variance is nan")
     loss += c1*torch.mean(torch.pow(var_vtx, 2))
-    # print all the losses, the loss from the different means and the loss from the variance
     if print_bool:
         print("Contrastive loss: {}, loss from vtx distance: {}, loss from variance: {}".format(loss, -c2*torch.mean(torch.pow(euclidean_dist_vtx, 2)), c1*torch.mean(torch.pow(var_vtx, 2))))
-        # if any of the loss is nan, print the data
     if torch.isnan(loss):
         print("Contrastive loss is nan")
         print("pfc_enc: {}".format(pfc_enc))
@@ -117,8 +107,6 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, print_bool=False):
         print("euclidean_dist_vtx: {}".format(euclidean_dist_vtx))
         print("var_vtx: {}".format(var_vtx))
         raise(ValueError)
-        # return 0 loss and gradient
-        return 0
     return loss
         
 

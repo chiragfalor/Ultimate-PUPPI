@@ -2,7 +2,6 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 # from torch_geometric.nn.conv import Point_Transformer_Conv
-from torch_geometric.nn.conv import TransformerConv
 try:
     from Point_transformer_conv import PointTransformerConv
 except:
@@ -20,7 +19,9 @@ class Net(nn.Module):
         self.vtx_encode = nn.Sequential(
             nn.Linear(4, hidden_dim//2),
             nn.SiLU(),
-            nn.Linear(hidden_dim//2, hidden_dim)
+            nn.Linear(hidden_dim//2, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim)
         )
         self.pfc_encode = nn.Sequential(
             nn.Linear(pfc_input_dim, hidden_dim),
