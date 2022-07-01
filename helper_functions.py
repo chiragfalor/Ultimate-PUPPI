@@ -104,7 +104,7 @@ def plot_2_embeddings(embeddings1, embeddings2, save_name, color1=None, color2=N
     plt.close()
     
 
-def pngs_to_gif(png_dir, gif_name, size=(500, 500), fps=5):
+def pngs_to_gif(png_dir, gif_name, size=(580, 450), fps=5):
     '''
     png_dir: string
     gif_name: string
@@ -208,9 +208,9 @@ def make_model_evolution_gif(net, model_name, data_loader):
 
     for epoch in epoch_list:
         net.load_state_dict(torch.load(model_dir + epoch)['model'])
-        save_name = '/'+ model_name + '/'+ model_name + '_' + epoch[:-3]
-        # df = save_predictions(net, data_loader, save_name)
-        df = pd.load(home_dir + 'results/{}.csv'.format(save_name))
+        save_name = model_name + '/'+ model_name + '_' + epoch[:-3]
+        df = save_predictions(net, data_loader, save_name)
+        # df = pd.read_csv(home_dir + 'results/{}.csv'.format(save_name))
         plot_z_pred_z_true(df, save_name)
 
     pngs_to_gif(save_dir, model_name + '_evolution')

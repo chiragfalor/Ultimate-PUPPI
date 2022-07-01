@@ -5,7 +5,9 @@ from helper_functions import *
 
 if __name__ == '__main__':
     model_name = 'DynamicPointTransformer'
-    net = get_neural_net(model_name)(pfc_input_dim=13, k1=32, k2=8, dropout=0)
+    model_name = 'modelv2_analysis'
+    model_name = 'modelv2'
+    net = get_neural_net(model_name)(pfc_input_dim=13, hidden_dim=256, k1=32, k2=16, dropout=0)
 
     data_test = UPuppiV0(home_dir + "test/")
     test_loader = DataLoader(data_test, batch_size=32, shuffle=True,

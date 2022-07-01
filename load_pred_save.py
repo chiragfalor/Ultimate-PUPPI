@@ -1,10 +1,10 @@
 from helper_functions import *
 
 BATCHSIZE = 32
-epoch_to_load = 1
-model_name = "DynamicPointTransformer"
-
-net = get_neural_net(model_name)(pfc_input_dim=13, k1=32, k2=8, dropout=0)
+epoch_to_load = 19
+# model_name = "DynamicPointTransformer"
+model_name = 'modelv2_analysis'
+net = get_neural_net(model_name)(pfc_input_dim=13, hidden_dim=320, k1=32, k2=16, dropout=0)
 
 data_test = UPuppiV0(home_dir + "test/")
 test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
@@ -21,4 +21,7 @@ save_name = '{}/{}_epoch-{:02d}'.format(model_name, model_name, epoch_to_load)
 # # get df by uncommenting one of the following lines
 # df = save_predictions(net, test_loader, save_name)
 df = pd.read_csv(home_dir + 'results/{}.csv'.format(save_name))
-plot_z_pred_z_true(df, save_name)
+# select particles with vtx_truth == 0
+df = df[df['vtx_truth'] != 0]
+print(df.head())
+plot_z_pred_z_true(df, save_name + '_pileup')

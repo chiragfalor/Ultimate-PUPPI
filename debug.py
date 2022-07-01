@@ -3,18 +3,16 @@ import torch
 import numpy as np
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
+from helper_functions import *
 
 # random seed
 np.random.seed(0)
 torch.manual_seed(40)
 
 # file for debugging tests
+pngs_to_gif(home_dir + 'results/DynamicPointTransformer/', 'DynamicPointTransformer_evolution')
 
-# get home directory path
-with open('home_path.txt', 'r') as f:
-    home_dir = f.readlines()[0].strip()
-
-if __name__ == '__main__':
+if __name__ == '__main__' and False:
     # test visualize_embeddings
     # load the model
     data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
