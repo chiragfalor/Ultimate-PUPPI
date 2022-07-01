@@ -1,9 +1,15 @@
 import os, torch
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from torch import nn
 from sklearn.decomposition import PCA
 from PIL import Image
+from tqdm import tqdm
+from upuppi_v0_dataset import UPuppiV0
+from torch_geometric.data import DataLoader
+
 
 # get home directory path
 with open('home_path.txt', 'r') as f:
@@ -126,3 +132,64 @@ def pngs_to_gif(png_dir, gif_name, size=(500, 500), fps=5):
     # save the gif
     images[0].save(save_loc, save_all=True, append_images=images[1:], duration=1000/fps, loop=0)
 
+
+def save_predictions(net, data_loader, save_name):
+    '''
+    Saves the data and predictions of the network for all the data in the data_loader
+    '''
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.to(device)
+    net.eval()
+    total_loss = 0
+    # initialize np arrays to save the data and predictions
+    z_pred = None
+    for data in tqdm(data_loader):
+        data = data.to(device)
+        with torch.no_grad():
+            z_out = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+            loss = nn.MSELoss()(z_out.squeeze(), data.y)
+            total_loss += loss.item()
+            if z_pred is None:
+                z_pred = torch.squeeze(z_out).detach().cpu().numpy()
+                z_true = data.y.detach().cpu().numpy()
+                vtx_truth = data.truth.detach().cpu().numpy() 
+                charge = data.x_pfc[:, -2].detach().cpu().numpy()
+            else:
+                z_pred = np.concatenate((z_pred, torch.squeeze(z_out).detach().cpu().numpy()), axis=0)
+                z_true = np.concatenate((z_true, data.y.detach().cpu().numpy()), axis=0)
+                vtx_truth = np.concatenate((vtx_truth, data.truth.detach().cpu().numpy()), axis=0)
+                charge = np.concatenate((charge, data.x_pfc[:, -2].detach().cpu().numpy()), axis=0)
+    print("Total loss: {}".format(total_loss/len(data_loader)))
+    data_dict = {'z_pred': z_pred, 'z_true': z_true, 'charge': charge, 'vtx_truth': vtx_truth}
+    df = pd.DataFrame(data_dict)
+    df.to_csv(home_dir + 'results/{}.csv'.format(save_name), index=False)
+    print("Saved data and predictions to results/{}.csv".format(save_name))
+    return df
+
+
+def plot_z_pred_z_true(df, save_name):
+    '''
+    df: pandas dataframe
+    save_name: string
+    return: None
+    '''
+    # calculate total test loss
+    total_loss = nn.MSELoss()(torch.tensor(df.z_pred.values), torch.tensor(df.z_true.values)).item()
+    # separate charged and neutral particles
+    charged = df[df.charge != 0]
+    neutral = df[df.charge == 0]
+    # calculate neutral loss
+    neutral_loss = nn.MSELoss()(torch.tensor(neutral.z_pred.values), torch.tensor(neutral.z_true.values)).item()
+    # plot charged particles with red dots and neutral particles with blue dots
+    plt.scatter(charged.z_true, charged.z_pred, c='red', marker='.', s=1)
+    plt.scatter(neutral.z_true, neutral.z_pred, c='blue', marker='.', s=1)
+    # add neutral loss and total loss
+    plt.text(70, -200, "Total loss: {:.2f}".format(total_loss))
+    plt.text(50, -220, "Neutral loss: {:.2f}".format(neutral_loss))
+    # add legend
+    plt.legend(['Charged', 'Neutral'])
+    # add axis labels
+    plt.xlabel('True z')
+    plt.ylabel('Predicted z')
+    plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
+    plt.close()
