@@ -93,7 +93,7 @@ for epoch in range(NUM_EPOCHS):
     state_dicts = {'model':model.state_dict(),
                     'opt':optimizer.state_dict()} 
 
-    torch.save(state_dicts, os.path.join(model_dir, 'epoch-{}.pt'.format(epoch)))
+    torch.save(state_dicts, os.path.join(model_dir, 'epoch-{:02d}.pt'.format(epoch)))
     print("Model saved")
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")

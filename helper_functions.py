@@ -110,14 +110,13 @@ def pngs_to_gif(png_dir, gif_name, size=(500, 500), fps=5):
     gif_name: string
     return: None
     '''
-    # get all pngs in the directory
     png_list = os.listdir(png_dir)
-    # check the extension of each png
     png_list = [png for png in png_list if png.endswith('.png')]
-    # sort the pngs by name
-    png_list.sort()
-    # create a list of images
+    # sort the pngs by number at the end of the file name
+    # png_list.sort(key=lambda x: int(x.split('-')[-1].split('.')[0]))
+    png_list.sort()   # sort by file name
     images = []
+
     for png in png_list:
         # get the path of the png
         png_path = os.path.join(png_dir, png)
@@ -127,9 +126,8 @@ def pngs_to_gif(png_dir, gif_name, size=(500, 500), fps=5):
         image = image.resize(size)
         # add the image to the list
         images.append(image)
-    # save the gif in the same directory as the pngs
+    
     save_loc = png_dir + gif_name + '.gif'
-    # save the gif
     images[0].save(save_loc, save_all=True, append_images=images[1:], duration=1000/fps, loop=0)
 
 
@@ -183,14 +181,15 @@ def plot_z_pred_z_true(df, save_name):
     # plot charged particles with red dots and neutral particles with blue dots
     plt.scatter(charged.z_true, charged.z_pred, c='red', marker='.', s=1)
     plt.scatter(neutral.z_true, neutral.z_pred, c='blue', marker='.', s=1)
-    # add neutral loss and total loss
+    # Beautify the plot
+    plt.title(save_name.split('/')[-1])
     plt.text(70, -200, "Total loss: {:.2f}".format(total_loss))
     plt.text(50, -220, "Neutral loss: {:.2f}".format(neutral_loss))
-    # add legend
     plt.legend(['Charged', 'Neutral'])
-    # add axis labels
     plt.xlabel('True z')
     plt.ylabel('Predicted z')
+    plt.xlim(-250, 250)
+    plt.ylim(-250, 250)
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
     plt.close()
 
@@ -210,7 +209,8 @@ def make_model_evolution_gif(net, model_name, data_loader):
     for epoch in epoch_list:
         net.load_state_dict(torch.load(model_dir + epoch)['model'])
         save_name = '/'+ model_name + '/'+ model_name + '_' + epoch[:-3]
-        df = save_predictions(net, data_loader, save_name)
+        # df = save_predictions(net, data_loader, save_name)
+        df = pd.load(home_dir + 'results/{}.csv'.format(save_name))
         plot_z_pred_z_true(df, save_name)
 
     pngs_to_gif(save_dir, model_name + '_evolution')
