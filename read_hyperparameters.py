@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 with open('home_path.txt', 'r') as f:
     home_path = f.readlines()[0].strip()
 
-file_loc = home_path + 'hyperparameter_list_old.txt'
+file_loc = home_path + 'hyperparameter_list.txt'
 
 # open file
 with open(file_loc, 'r') as f:
@@ -21,11 +21,13 @@ with open(file_loc, 'r') as f:
     list_as_str[-1] = list_as_str[-1][:-1]
     for i in range(len(list_as_str)-1):
         list_as_str[i] = list_as_str[i] + '}'
-    list_as_dict = [eval(x) for x in list_as_str]
+    list_of_dict = [eval(x) for x in list_as_str]
     # convert to pandas dataframe
-    df = pd.DataFrame(list_as_dict)
+    df = pd.DataFrame(list_of_dict)
     # sort by loss
     df = df.sort_values(by='loss')
+    # select epoch 9
+    df = df[df['epoch'] == 9]
     # select where dropout is 0.25
     # df = df[df['dropout'] == 0.0]
     # df = df[df['hidden_dim'] == 100]

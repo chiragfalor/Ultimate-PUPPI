@@ -14,7 +14,8 @@ start_time = time.time()
 data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
 BATCHSIZE = 32
-model_name = "DynamicPointTransformer"
+# model_name = "DynamicPointTransformer"
+model_name = "modelv2_analysis"
 
 
 print("Training {}...".format(model_name))
@@ -23,7 +24,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-model = get_neural_net(model_name)(pfc_input_dim=13, k1=32, k2=8, dropout=0).to(device)
+model = get_neural_net(model_name)(pfc_input_dim=13, hidden_dim=320, k1=32, k2=16, dropout=0).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -56,13 +57,14 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         data.to(device)
         optimizer.zero_grad()
         z_pred, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        loss = loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight)
+        # vtx_embeddings = None  # uncomment if you want to use contrastive loss
+        loss = loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight)
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
         if counter % 100 == 1:
             print("Train loss: ", train_loss / counter)
-            loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, print_bool = True)
+            loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight, print_bool = True)
     return train_loss / counter
 
 @torch.no_grad()
@@ -76,7 +78,7 @@ def test(model, loss_fn):
         data = process_data(data)
         data.to(device)
         z_pred, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        loss = loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings, embedding_loss_weight=0, neutral_weight=1)
+        loss = loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings, embedding_loss_weight=0, neutral_weight=10**5)
         test_loss += loss.item()
     return test_loss / counter
 
@@ -84,7 +86,7 @@ def test(model, loss_fn):
 NUM_EPOCHS = 20
 for epoch in range(NUM_EPOCHS):
     if epoch % 2 == 0:
-        embedding_loss_weight = 0.1
+        embedding_loss_weight = 0.01
     else:
         embedding_loss_weight = 0.0
     train_loss = train(model, optimizer, loss_fn=combined_loss_fn, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1)

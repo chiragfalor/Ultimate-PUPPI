@@ -77,7 +77,7 @@ def get_neural_net(model_name):
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata":
+    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata" or model == "modelv2_analysis":
         from models.modelv2 import Net
     elif model == "modelv3":
         from models.modelv3 import Net

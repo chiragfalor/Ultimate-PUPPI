@@ -52,13 +52,13 @@ def embedding_loss(pfc_enc, vtx_enc, true_vtx_id, pfc_batch, vtx_batch, print_bo
     total_pfc_loss /= batch_size
     total_vtx_loss /= batch_size
     # regularize the whole embedding to keep it normalized
-    reg_loss = ((torch.norm(vtx_enc, p=2, dim=1))**6).mean()
+    reg_loss = ((torch.norm(vtx_enc, p=2, dim=1)/5)**6).mean()
     if print_bool:
         # print the losses
-        print("Pfc loss: ", total_pfc_loss.item(), " Vtx loss: ", total_vtx_loss.item(), " Reg loss: ", reg_loss.item())
-    return (1/200)*(total_pfc_loss + total_vtx_loss + reg_loss)
+        print("Pfc loss: {:2f}, Vtx loss: {:2f}, Regularization loss: {:2f}".format(total_pfc_loss.item(), total_vtx_loss.item(), reg_loss.item()))
+    return (total_pfc_loss + total_vtx_loss + reg_loss)/10
 
-def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c1=1.0, reg_ratio = 0.01, print_bool=False):
+def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
     '''
     Calculate the contrastive loss
     input:
@@ -79,13 +79,15 @@ def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c1=1.0, reg_ratio = 0.01, prin
     pfc_enc_2 = pfc_enc[random_indices2, :]
     vtx_id_1 = vtx_id[random_indices1]
     vtx_id_2 = vtx_id[random_indices2]
+    # number of unique vertices
+    num_vtx = vtx_id.max().item() + 1
     # get a mask which is c if the particles are the same and -1 if they are different
-    mask = -1+(c1+1)*(vtx_id_1 == vtx_id_2).float()
+    mask = -1+(c1*num_vtx+1)*(vtx_id_1 == vtx_id_2).float()
     euclidean_dist = F.pairwise_distance(pfc_enc_1, pfc_enc_2)
-    loss = torch.mean(mask*torch.pow(euclidean_dist, 2))
+    loss = 10*torch.mean(mask*torch.pow(euclidean_dist, 2))
     loss += reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean()
     if print_bool:
-        print("Contrastive loss: {}, Euclidean dist between particles: {}, Regularization loss: {}".format(loss.item(),torch.mean(torch.pow(euclidean_dist, 2)).item(), reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean().item()))
+        print("Contrastive loss: {:.2f}, Euclidean dist between particles: {:.2f}, Regularization loss: {:.2f}".format(loss.item(),torch.mean(torch.pow(euclidean_dist, 2)).item(), reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean().item()))
     return loss
 
 def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, reg_ratio = 0.01, device = torch.device('cpu'), print_bool=False):
@@ -122,7 +124,7 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, reg_ratio = 0.01, device 
     return loss      
 
 
-def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=0.1, neutral_weight = 1, print_bool=False):
+def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
     '''
     Computes the combined loss including regression loss and embedding loss
     '''
@@ -136,7 +138,7 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
     else:
         emb_loss = 0
     # calculate the regression loss
-    regression_loss_fn = nn.MSELoss()
+    # regression_loss_fn = nn.MSELoss()
     regression_loss_fn = nn.L1Loss()
     z_pred = z_pred.squeeze()
     if neutral_weight != 1:
@@ -150,5 +152,5 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
         regression_loss = regression_loss_fn(z_pred, data.y)
     loss = embedding_loss_weight*emb_loss + regression_loss
     if print_bool:
-        print("Total loss: {}, Embedding loss: {}, Regression loss: {}".format(loss, embedding_loss_weight*emb_loss, regression_loss))
+        print("Total loss: {:.2f}, Embedding loss: {:.2f}, Regression loss: {:.2f}".format(loss, embedding_loss_weight*emb_loss, regression_loss))
     return loss
