@@ -136,6 +136,7 @@ train2/
 test2/
 
 # predictions
+*.csv
 results/*.csv
 results/*.txt
 results/old_results/*.csv

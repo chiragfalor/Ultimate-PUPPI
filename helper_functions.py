@@ -193,3 +193,26 @@ def plot_z_pred_z_true(df, save_name):
     plt.ylabel('Predicted z')
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
     plt.close()
+
+
+def make_model_evolution_gif(net, model_name, data_loader):
+    model_dir = home_dir + 'models/{}/'.format(model_name)
+    if not os.path.exists(model_dir):
+        raise(Exception("Model directory {} does not exist".format(model_dir)))
+    
+    save_dir = home_dir + 'results/{}/'.format(model_name)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    epoch_list = os.listdir(model_dir)
+    epoch_list = [epoch for epoch in epoch_list if epoch.endswith('.pt')]
+    epoch_list.sort()
+
+    for epoch in epoch_list:
+        net.load_state_dict(torch.load(model_dir + epoch)['model'])
+        save_name = '/'+ model_name + '/'+ model_name + '_' + epoch[:-3]
+        df = save_predictions(net, data_loader, save_name)
+        plot_z_pred_z_true(df, save_name)
+
+    pngs_to_gif(save_dir, model_name + '_evolution')
+
+
