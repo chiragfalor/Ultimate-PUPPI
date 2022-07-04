@@ -244,3 +244,39 @@ def make_model_evolution_gif(net, model_name, data_loader):
     pngs_to_gif(save_dir, model_name + '_evolution')
 
 
+
+def plot_predictions(df, model_name):
+    # make 3 plots:
+    # 1. z-prediction vs. z-true
+    # 2. z-prediction vs. input_pt
+    # 3. z-prediction vs. input_eta
+    # on the same figure
+    fig, axs = plt.subplots(3, 1, figsize=(10,20))
+
+
+    # plot a color plot of zpred vs ztrue across the whole dataset
+    axs[0].scatter(df['ztrue'],df['zpred'],s=0.1,c='blue')
+    axs[0].set_xlabel('ztrue')
+    axs[0].set_ylabel('zpred')
+    axs[0].set_title('zpred vs ztrue across the whole dataset')
+    # plot a color plot of zpred vs ztrue only for particles with input_charge = 0
+    # print number of particles with input_charge = 0
+    print(df[df['charge'] == 0].shape)
+    axs[1].scatter(df[df['charge']==0]['ztrue'],df[df['charge']==0]['zpred'],s=0.1,c='blue')
+    axs[1].set_xlabel('ztrue')
+    axs[1].set_ylabel('zpred')
+    axs[1].set_title('zpred vs ztrue for particles with input_charge = 0')
+
+    # plot a color plot of zpred vs ztrue only for particles with input_charge != 0
+    # print number of particles with input_charge != 0
+    print(df[df['charge'] != 0].shape)
+    axs[2].scatter(df[df['charge']!=0]['ztrue'],df[df['charge']!=0]['zpred'],s=0.1,c='blue')
+    axs[2].set_xlabel('ztrue')
+    axs[2].set_ylabel('zpred')
+    axs[2].set_title('zpred vs ztrue for particles with input_charge != 0') 
+
+    plt.savefig(home_dir + 'results/{}_zpred_vs_ztrue.png'.format(model_name), bbox_inches='tight')
+    plt.close()
+
+
+    
