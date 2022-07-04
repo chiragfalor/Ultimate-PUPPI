@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from torch import nn
 from sklearn.decomposition import PCA
+from scipy import stats
 from PIL import Image
 from tqdm import tqdm
 from upuppi_v0_dataset import UPuppiV0
@@ -203,10 +204,15 @@ def plot_z_pred_z_true(df, save_name):
     # plot charged particles with red dots and neutral particles with blue dots
     plt.scatter(charged.z_true, charged.z_pred, c='red', marker='.', s=1)
     plt.scatter(neutral.z_true, neutral.z_pred, c='blue', marker='.', s=1)
+    # plot two regression for charged and neutral particles with slope
+    slope, intercept, r_value, p_value, std_err = stats.linregress(neutral.z_true, neutral.z_pred)
+    # plt.plot(neutral.z_true, slope*neutral.z_true + intercept, c='blue', label=slope)
     # Beautify the plot
     plt.title(save_name.split('/')[-1])
     plt.text(70, -200, "Total loss: {:.2f}".format(total_loss))
     plt.text(50, -220, "Neutral loss: {:.2f}".format(neutral_loss))
+    # slopes
+    # plt.text(-20, 200, "Neutral slope: {:.2f}".format(slope))
     plt.legend(['Charged', 'Neutral'])
     plt.xlabel('True z')
     plt.ylabel('Predicted z')

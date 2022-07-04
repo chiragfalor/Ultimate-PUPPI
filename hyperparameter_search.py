@@ -79,7 +79,7 @@ def test(model, loss='euclidean'):
 
         total_loss += dist.sum().item()
 
-        neutral_idx = (data.x_pfc[:,-2] == 0).int()
+        neutral_idx = (data.x_pfc[:,-2] == 0)
         neutral_loss += dist[neutral_idx].sum().item()
 
         neutral_pileup_idx = (data.x_pfc[:,-2] == 0) & (data.truth != 0)
@@ -93,7 +93,7 @@ def hyperparameter_search():
     # define the hyperparameter search space
     embedding_loss_weights = np.logspace(-3, 0, 5)
     neutral_weights = np.logspace(0, 2, 5).astype(int)
-    lrs = np.logspace(-4, -3, 5)
+    lrs = np.logspace(-5, -3, 5)
     hidden_dims = np.logspace(1.9, 2.8, 5).astype(int)
     k1s = np.logspace(1, 2, 5).astype(int)
     k2s = np.logspace(0.5, 1.8, 5).astype(int)
