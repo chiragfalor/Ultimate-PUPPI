@@ -4,9 +4,9 @@ import random, time, copy
 from torch import optim
 
 # set random seeds
-random.seed(42)
-np.random.seed(42)
-torch.manual_seed(42)
+random.seed(2)
+np.random.seed(2)
+torch.manual_seed(2)
 
 start_time = time.time()
 
@@ -73,17 +73,16 @@ def test(model, loss='euclidean'):
         z_pred, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         # calculate euclidean loss
         if loss == 'euclidean':
-            dist = (z_pred - data.truth).pow(2)
+            dist = (z_pred - data.y).pow(2)
         else:
-            dist = (z_pred - data.truth).abs()
+            dist = (z_pred - data.y).abs()
 
-        total_loss += dist.sum().item()
-
+        total_loss += dist.mean().item()
         neutral_idx = (data.x_pfc[:,-2] == 0)
-        neutral_loss += dist[neutral_idx].sum().item()
+        neutral_loss += dist[neutral_idx].mean().item()
 
         neutral_pileup_idx = (data.x_pfc[:,-2] == 0) & (data.truth != 0)
-        neutral_pileup_loss += dist[neutral_pileup_idx].sum().item()
+        neutral_pileup_loss += dist[neutral_pileup_idx].mean().item()
 
     return total_loss / counter, neutral_loss / counter, neutral_pileup_loss / counter
 
@@ -111,7 +110,7 @@ def hyperparameter_search():
         # randomly sample a hyperparameter configuration
         hyperparameter_config = {key: random.choice(search_space[key]) for key in search_space}
         print("Hyperparameter config: ", hyperparameter_config)
-        upuppi = get_neural_net(hyperparameter_config['model_name'])(hidden_dim=hyperparameter_config['hidden_dim'].item(), k1=hyperparameter_config['k1'].item(), k2=hyperparameter_config['k2'].item(), dropout=hyperparameter_config['dropout'].item()).to(device)
+        upuppi = get_neural_net(hyperparameter_config['model_name'])(pfc_input_dim = 12, hidden_dim=hyperparameter_config['hidden_dim'].item(), k1=hyperparameter_config['k1'].item(), k2=hyperparameter_config['k2'].item(), dropout=hyperparameter_config['dropout'].item()).to(device)
         print("Training with hyperparameters: ", hyperparameter_config)
         # define the optimizer
         if hyperparameter_config['optimizer'] == 'adam':
