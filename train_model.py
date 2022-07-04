@@ -30,10 +30,8 @@ model_dir = home_dir + 'models/{}/'.format(model_name)
 model = get_neural_net(model_name)(pfc_input_dim=13, hidden_dim=320, k1=16, k2=4, dropout=0).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
-    
-with open(model_dir + 'hyperparameters.txt', 'w') as f:
+if not os.path.exists(model_dir): os.makedirs(model_dir)
+with open(model_dir + 'hyperparameters.txt', 'w') as f: 
     f.write("network_architecture: {}\n".format(model))
 
 
