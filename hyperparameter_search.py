@@ -158,7 +158,7 @@ def hyperparameter_search():
     k1s = np.logspace(1, 2, 5).astype(int)
     k2s = np.logspace(1, 1.8, 5).astype(int)
     dropouts = np.linspace(0, 0.5, 3)
-    optimizers = ['adam', 'sgd', 'adagrad', 'adadelta', 'rmsprop']
+    optimizers = ['adam', 'adagrad', 'adadelta', 'rmsprop']    # sgd gives nan loss
     # define the search space
     search_space = {'c_ratio': c_ratios, 'neutral_ratio': neutral_ratios, 'lr': lr, 'hidden_dim': hidden_dims, 'k1': k1s, 'k2': k2s, 'dropout': dropouts, 'optimizer': optimizers}
     

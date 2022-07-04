@@ -33,7 +33,7 @@ def get_neural_net(model_name):
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model == "modelv2" or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata" or model == "modelv2_analysis":
+    elif model[:7] == "modelv2":   # or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata" or model == "modelv2_analysis" or model == "modelv2_random_z":
         from models.modelv2 import Net
     elif model == "modelv3":
         from models.modelv3 import Net
@@ -48,6 +48,27 @@ def get_neural_net(model_name):
     else:
         raise(Exception("Model not found"))
     return Net
+
+
+def process_data(data):
+    '''
+    Apply data processing as needed and return the processed data.
+    '''
+    neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
+    # randomly select half of the neutral particles
+    half_neutral_idx = neutral_idx[torch.randperm(neutral_idx.shape[0])[:int(neutral_idx.shape[0]/2)]]
+    # multiply the neutral particles by -1
+    data.x_pfc[half_neutral_idx, -1] *= -1
+    # get the indices where truth is not 0
+    pileup_idx = torch.nonzero(data.truth != 0).squeeze()
+    # keep only the pileup particles
+    data.x_pfc = data.x_pfc[pileup_idx]
+    data.x_pfc_batch = data.x_pfc_batch[pileup_idx]
+    data.truth = data.truth[pileup_idx]
+    data.y = data.y[pileup_idx]
+    # data.x_vtx = data.x_vtx[1:, :]
+    # data.x_vtx_batch = data.x_vtx_batch[1:]
+    return data
 
 
 def vertex_predictor(particle_embedding, pfc_embeddings, true_vertex, k=1):
@@ -142,6 +163,7 @@ def save_predictions(net, data_loader, save_name):
     # initialize np arrays to save the data and predictions
     z_pred = None
     for data in tqdm(data_loader):
+        data = process_data(data)
         data = data.to(device)
         with torch.no_grad():
             z_out = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
