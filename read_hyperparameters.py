@@ -26,6 +26,8 @@ with open(file_loc, 'r') as f:
     df = pd.DataFrame(list_of_dict)
     # sort by loss
     df = df.sort_values(by='loss')
+    # select optimizer
+    df = df[df['optimizer'] != 'sgd']
     # select epoch 9
     df = df[df['epoch'] == 9]
     # select where dropout is 0.25

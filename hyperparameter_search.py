@@ -1,36 +1,23 @@
-# pyright: reportMissingModuleSource=false
-
-import time
-import sklearn
-import numpy as np
-import sys
-#sys.path.append('/home/yfeng/UltimatePuppi/deepjet-geometric/')
-from upuppi_v0_dataset import UPuppiV0
-from torch_geometric.data import DataLoader
-import os
-import torch
-from torch import nn
+from helper_functions import *
+from loss_functions import *
+import random, time, copy
 from torch import optim
-from models.modelv2 import Net
-from tqdm import tqdm
-import copy
-import random
-# load the home directory path
-with open('home_path.txt', 'r') as f:
-    home_dir = f.readlines()[0].strip()
 
 # set random seeds
-random.seed(0)
-np.random.seed(0)
-torch.manual_seed(0)
+random.seed(42)
+np.random.seed(42)
+torch.manual_seed(42)
 
-BATCHSIZE = 16
 start_time = time.time()
-data_train = UPuppiV0(home_dir + "train/")
-data_test = UPuppiV0(home_dir + "test/")
 
-# data_train = UPuppiV0(home_dir + "Ultimate-PUPPI/train2/")
-# data_test = UPuppiV0(home_dir + "Ultimate-PUPPI/test2/")
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
+BATCHSIZE = 32
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
+print("Using device: ", device, torch.cuda.get_device_name(0))
+
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
@@ -38,177 +25,124 @@ train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
 test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                          follow_batch=['x_pfc', 'x_vtx'])
 
-model = "combined_model"
-model = "Dynamic_GATv2"
-model = "modelv2"
-# model = "modelv3"
-model_dir = home_dir + 'models/{}/'.format(model)
-#model_dir = '/home/yfeng/UltimatePuppi/Ultimate-PUPPI/models/v0/'
 
-
-print("Training {}...".format(model))
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = torch.device('cpu')
-# print the device used
-print("Using device: ", device, torch.cuda.get_device_name(0))
-
-
-def embedding_loss(data, pfc_enc, vtx_enc):
-    total_pfc_loss = 0
-    total_vtx_loss = 0
-    reg_loss = 0
-    euclidean_loss = nn.MSELoss().to(device)
-    batch_size = data.x_pfc_batch.max().item() + 1
-    for i in range(batch_size):
-        # get the batch index of the current batch
-        pfc_indices = (data.x_pfc_batch == i)
-        vtx_indices = (data.x_vtx_batch == i)
-        # get the embedding of the pfc, vtx, and truth in the current batch
-        pfc_enc_batch = pfc_enc[pfc_indices, :]
-        vtx_enc_batch = vtx_enc[vtx_indices, :]
-        truth_batch = data.truth[pfc_indices].to(dtype=torch.int64, device=device)
-        # take out particles which have corresponding vertices
-        valid_pfc = (truth_batch >= 0)
-        truth_batch = truth_batch[valid_pfc]
-        pfc_enc_batch = pfc_enc_batch[valid_pfc, :]
-        # the true encoding is the embedding of the true vertex
-        vertex_encoding = vtx_enc_batch[truth_batch, :]
-        # calculate loss between pfc encoding and vertex encoding
-        pfc_loss = 0.5*euclidean_loss(pfc_enc_batch, vertex_encoding)
-        total_pfc_loss += pfc_loss
-
-        if i//10 == 0:
-            random_indices = torch.randperm(len(truth_batch))[:30]
-            random_vtx_encoding = vertex_encoding[random_indices, :]
-            for j in range(len(random_vtx_encoding)):
-                for k in range(j+1, len(random_vtx_encoding)):
-                    vtx_loss = -0.01*euclidean_loss(random_vtx_encoding[j, :], random_vtx_encoding[k, :])
-                    total_vtx_loss += vtx_loss
-        else:
-            continue
-            
-            # regularize the whole embedding to keep it normalized
-    reg_loss = ((torch.norm(vtx_enc, p=2, dim=1)/10)**6).mean()
-    # print the losses
-    # print("Pfc loss: ", total_pfc_loss.item(), " Vtx loss: ", total_vtx_loss.item(), " Reg loss: ", reg_loss.item())
-    return total_pfc_loss + total_vtx_loss + reg_loss
-
-
-
-def train(optimizer, upuppi, c_ratio=0.05, neutral_ratio=1):
-    upuppi.train()
-    counter = 0
-    total_loss = 0
-    for data in tqdm(train_loader):
-        counter += 1
-        data = data.to(device) 
+def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight = 1):
+    '''
+    Trains the given model for one epoch
+    '''
+    model.train()
+    train_loss = 0
+    for counter, data in enumerate(tqdm(train_loader)):
+        data.to(device)
         optimizer.zero_grad()
-        out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        if c_ratio > 0:
-            emb_loss = (1/200)*embedding_loss(data, pfc_enc, vtx_enc)
-        else:
-            emb_loss = 0
-        if neutral_ratio > 1:
-            # calculate neutral loss
-            neutral_indices = torch.nonzero(data.x_pfc[:, 11] == 0).squeeze()
-            neutral_out = out[:,0][neutral_indices]
-            neutral_y = data.y[neutral_indices]
-            neutral_loss = nn.MSELoss()(neutral_out, neutral_y)
-            # calculate charged loss
-            charged_indices = torch.nonzero(data.x_pfc[:,11] != 0).squeeze()
-            charged_out = out[:,0][charged_indices]
-            charged_y = data.y[charged_indices]
-            charged_loss = nn.MSELoss()(charged_out, charged_y)
-            # calculate total loss
-            regression_loss = 200*(neutral_ratio*neutral_loss + charged_loss)/(neutral_ratio + 1)
-        else:
-            regression_loss = 200*nn.MSELoss()(out.squeeze(), data.y)
-        if counter % 50 == 0:
-            print("Regression loss: ", regression_loss.item(), " Embedding loss: ", emb_loss)
-        loss = (c_ratio*emb_loss) + (1-c_ratio)*regression_loss
+        z_pred, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        # vtx_embeddings = None  # uncomment if you want to use contrastive loss
+        loss = loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight)
+        # if loss is nan, print everything
+        if np.isnan(loss.item()):
+            print("Loss is nan")
+            print("data: ", data)
+            print("z_pred: ", z_pred)
+            print("pfc_embeddings: ", pfc_embeddings)
+            print("vtx_embeddings: ", vtx_embeddings)
+            print("data.x_pfc: ", data.x_pfc)
+            print("data.x_vtx: ", data.x_vtx)
+            print("data.x_pfc_batch: ", data.x_pfc_batch)
+            print("data.x_vtx_batch: ", data.x_vtx_batch)
+            print("data.truth: ", data.truth)
+            loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight, print_bool = True)
+            # sys.exit()
+            continue
         loss.backward()
         optimizer.step()
-        total_loss += loss.item()
-    total_loss = total_loss / counter        
-    return total_loss
+        train_loss += loss.item()
+    return train_loss / counter
 
-# test function
 @torch.no_grad()
-def test(upuppi):
-    upuppi.eval()
-    euclidean_loss = nn.MSELoss()
-    counter = 0
+def test(model, loss='euclidean'):
+    '''
+    Tests the given model on the test set and returns the total loss, loss across neutrals, and loss on neutrals in pileup
+    the loss fn should be a regression loss function like nn.MSELoss() or nn.L1Loss()
+    '''
+    model.eval()
     total_loss = 0
-    for data in tqdm(test_loader):
-        counter += 1
-        data = data.to(device)
-        out, batch, pfc_enc, vtx_enc = upuppi(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        regression_loss = euclidean_loss(out.squeeze(), data.y)
-        loss = regression_loss
-        total_loss += loss.item()
-    total_loss = total_loss / counter        
-    return total_loss
+    neutral_loss = 0
+    neutral_pileup_loss = 0
+    for counter, data in enumerate(tqdm(test_loader)):
+        data.to(device)
+        z_pred, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        # calculate euclidean loss
+        if loss == 'euclidean':
+            dist = (z_pred - data.truth).pow(2)
+        else:
+            dist = (z_pred - data.truth).abs()
+
+        total_loss += dist.sum().item()
+
+        neutral_idx = (data.x_pfc[:,-2] == 0).int()
+        neutral_loss += dist[neutral_idx].sum().item()
+
+        neutral_pileup_idx = (data.x_pfc[:,-2] == 0) & (data.truth != 0)
+        neutral_pileup_loss += dist[neutral_pileup_idx].sum().item()
+
+    return total_loss / counter, neutral_loss / counter, neutral_pileup_loss / counter
+
+
 
 def hyperparameter_search():
     # define the hyperparameter search space
-    c_ratios = np.logspace(-3, -1, 5)
-    neutral_ratios = np.logspace(0, 1, 3).astype(int)
-    lr = np.logspace(-4, -2, 5)
+    embedding_loss_weights = np.logspace(-3, 0, 5)
+    neutral_weights = np.logspace(0, 2, 5).astype(int)
+    lrs = np.logspace(-4, -3, 5)
     hidden_dims = np.logspace(1.9, 2.8, 5).astype(int)
     k1s = np.logspace(1, 2, 5).astype(int)
-    k2s = np.logspace(1, 1.8, 5).astype(int)
-    dropouts = np.linspace(0, 0.5, 3)
-    optimizers = ['adam', 'adagrad', 'adadelta', 'rmsprop']    # sgd gives nan loss
-    # define the search space
-    search_space = {'c_ratio': c_ratios, 'neutral_ratio': neutral_ratios, 'lr': lr, 'hidden_dim': hidden_dims, 'k1': k1s, 'k2': k2s, 'dropout': dropouts, 'optimizer': optimizers}
-    
-    
-    # define a function which uses binary search to find the best hyperparameters
-    # train the model
+    k2s = np.logspace(0.5, 1.8, 5).astype(int)
+    dropouts = np.linspace(0, 0.5, 5)
+    model_names = ['modelv2', 'DynamicPointTransformer']
+    optimizers = ['adam', 'adagrad', 'adadelta']    # sgd gives nan loss, rmsprop is relatively bad
+    search_space = {'embedding_loss_weight': embedding_loss_weights, 'neutral_weight': neutral_weights, 'lr': lrs, 'hidden_dim': hidden_dims, 'k1': k1s, 'k2': k2s, 'dropout': dropouts, 'model_name': model_names, 'optimizer': optimizers}
+
     NUM_EPOCHS = 10
-    # define the best model parameters
-    best_hyperparameters = {'c_ratio': 0.05, 'neutral_ratio': 1, 'lr': 0.001, 'hidden_dim': 100, 'dropout': 0,'k1': 1, 'k2': 1, 'optimizer': 'adam','best_loss': 1000000, 'epoch': 0, 'best_model': None}
+    # initialize best loss
+    best_hyperparameters = {'best_loss': 100000}
     hyperparameter_list = []
 
     for _ in range(200):
         # randomly sample a hyperparameter configuration
-        hyperparameter_config = {'c_ratio': random.choice(search_space['c_ratio']), 'neutral_ratio': random.choice(search_space['neutral_ratio']), 'lr': random.choice(search_space['lr']), 'hidden_dim': random.choice(search_space['hidden_dim']), 'dropout': random.choice(search_space['dropout']), 'k1': random.choice(search_space['k1']), 'k2': random.choice(search_space['k2']), 'optimizer': random.choice(search_space['optimizer'])}
-        c_ratio, neutral_ratio, lr, hidden_dim, dropout, k1, k2, optimizer_type = hyperparameter_config['c_ratio'], hyperparameter_config['neutral_ratio'], hyperparameter_config['lr'], hyperparameter_config['hidden_dim'], hyperparameter_config['dropout'], hyperparameter_config['k1'], hyperparameter_config['k2'], hyperparameter_config['optimizer']
-        upuppi = Net(hidden_dim=hidden_dim, dropout=dropout).to(device)
-        print("Training with: c_ratio: ", c_ratio, " neutral_ratio: ", neutral_ratio, " lr: ", lr, " hidden_dim: ", hidden_dim, " dropout: ", dropout, " k1: ", k1, " k2: ", k2, " optimizer: ", optimizer_type)
+        hyperparameter_config = {key: random.choice(search_space[key]) for key in search_space}
+        print("Hyperparameter config: ", hyperparameter_config)
+        upuppi = get_neural_net(hyperparameter_config['model_name'])(hidden_dim=hyperparameter_config['hidden_dim'].item(), k1=hyperparameter_config['k1'].item(), k2=hyperparameter_config['k2'].item(), dropout=hyperparameter_config['dropout'].item()).to(device)
+        print("Training with hyperparameters: ", hyperparameter_config)
         # define the optimizer
-        if optimizer_type == 'adam':
-            optimizer = optim.Adam(upuppi.parameters(), lr=lr)
-        elif optimizer_type == 'sgd':
-            optimizer = optim.SGD(upuppi.parameters(), lr=lr)
-        elif optimizer_type == 'adagrad':
-            optimizer = optim.Adagrad(upuppi.parameters(), lr=lr)
-        elif optimizer_type == 'adadelta':
-            optimizer = optim.Adadelta(upuppi.parameters(), lr=lr)
-        elif optimizer_type == 'rmsprop':
-            optimizer = optim.RMSprop(upuppi.parameters(), lr=lr)
+        if hyperparameter_config['optimizer'] == 'adam':
+            optimizer = optim.Adam(upuppi.parameters(), lr=hyperparameter_config['lr'].item())
+        elif hyperparameter_config['optimizer'] == 'adagrad':
+            optimizer = optim.Adagrad(upuppi.parameters(), lr=hyperparameter_config['lr'].item())
+        elif hyperparameter_config['optimizer'] == 'adadelta':
+            optimizer = optim.Adadelta(upuppi.parameters(), lr=hyperparameter_config['lr'].item())
 
         # train the model
         for epoch in range(NUM_EPOCHS):
             print("Epoch: ", epoch)
-            train(optimizer, upuppi, c_ratio=c_ratio, neutral_ratio=neutral_ratio)
-            # test the model
-            test_loss = test(upuppi)
-            print("Test loss: ", test_loss)
-            hyperparameter_dict = {'c_ratio': c_ratio, 'neutral_ratio': neutral_ratio, 'lr': lr, 'hidden_dim': hidden_dim, 'dropout': dropout, 'k1': k1, 'k2': k2, 'optimizer': optimizer_type, 'loss': test_loss, 'epoch': epoch}
-            hyperparameter_list.append(hyperparameter_dict)
+            train_loss = train(upuppi, optimizer, loss_fn=combined_loss_fn, embedding_loss_weight=hyperparameter_config['embedding_loss_weight'], neutral_weight=hyperparameter_config['neutral_weight'])
+            total_loss, neutral_loss, neutral_pileup_loss = test(upuppi, loss='euclidean')
+            print("Test losses: ", total_loss, neutral_loss, neutral_pileup_loss)
+            # add in the losses and epoch to hyperparameter_dict
+            hyperparameter_config['train_loss'], hyperparameter_config['total_loss'], hyperparameter_config['neutral_loss'], hyperparameter_config['neutral_pileup_loss'] = train_loss, total_loss, neutral_loss, neutral_pileup_loss
+            hyperparameter_config['epoch'] = epoch
+            hyperparameter_list.append(hyperparameter_config)
             # save the list
             with open('hyperparameter_list.txt', 'w') as f:
                 f.write(str(hyperparameter_list))
             # check if the model has the best loss
-            if test_loss < best_hyperparameters['best_loss']:
+            if total_loss < best_hyperparameters['best_loss']:
                 # update the best hyperparameters dict
-                best_hyperparameters['c_ratio'], best_hyperparameters['neutral_ratio'], best_hyperparameters['lr'], best_hyperparameters['hidden_dim'], best_hyperparameters['dropout'], best_hyperparameters['k1'], best_hyperparameters['k2'], best_hyperparameters['optimizer'], best_hyperparameters['epoch'], best_hyperparameters['best_model'] = c_ratio, neutral_ratio, lr, hidden_dim, dropout, k1, k2, optimizer_type, epoch, upuppi
-                best_hyperparameters['best_loss'] = test_loss
+                for key in hyperparameter_config:
+                    best_hyperparameters[key] = hyperparameter_config[key]
                 best_model = copy.deepcopy(upuppi)
-                print("Best loss: ", best_hyperparameters['best_loss'], " Hyperparameters: ", best_hyperparameters)
+                print("Best loss: ", best_hyperparameters['best_loss'], "with hyperparameters: ", best_hyperparameters)
                 # save the best model
-                torch.save(best_model.state_dict(), os.path.join(model_dir, "best_model.pt"))
+                torch.save(best_model.state_dict(), os.path.join(home_dir, "best_model.pt"))
                 # save the best model parameters
                 with open("best_model_parameters.txt", "w") as f:
                     f.write(str(best_hyperparameters))
