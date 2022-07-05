@@ -57,8 +57,8 @@ def process_data(data):
     '''
     Apply data processing as needed and return the processed data.
     '''
-    data.truth = (data.truth != 0).int()
     return data
+    data.truth = (data.truth != 0).int()
     neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
     # randomly select half of the neutral particles
     half_neutral_idx = neutral_idx[torch.randperm(neutral_idx.shape[0])[:int(neutral_idx.shape[0]/2)]]

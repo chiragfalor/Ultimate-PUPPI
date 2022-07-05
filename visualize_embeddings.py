@@ -8,13 +8,13 @@ torch.manual_seed(41)
 if __name__ == '__main__':
     data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
 
-    model_name = "vtx_pred_model3"
+    model_name = "vtx_pred_model_puppi"
 
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model_name)
 
     # model params
-    epoch_num = 4
+    epoch_num = 11
     net = get_neural_net(model_name)()
     plot_against = 'z true'
     plot_against = 'vtx id'
@@ -28,6 +28,7 @@ if __name__ == '__main__':
             pfc_truth = data.y.detach().numpy()
         elif plot_against == 'vtx id':
             pfc_truth = data.truth.detach().numpy()
+            pfc_truth = (data.truth != 0).int().detach().numpy()
         else:
             raise ValueError("plot_against must be 'z' or 'vtx_id'")
 
