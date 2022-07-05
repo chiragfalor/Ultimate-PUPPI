@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-import torch.nn.functional as F
 from torch_geometric.nn.conv import DynamicEdgeConv
 
 
@@ -21,6 +20,7 @@ class Net(nn.Module):
 
         self.graph_conv = DynamicEdgeConv(nn=nn.Sequential(nn.Linear(2*hidden_dim, hidden_dim), nn.SiLU()),
                 k=k1, aggr='mean')
+
         self.ffn = nn.Sequential(
             nn.Linear(hidden_dim, 2*hidden_dim),
             nn.SiLU(),

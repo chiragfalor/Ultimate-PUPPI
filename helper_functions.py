@@ -46,6 +46,8 @@ def get_neural_net(model_name):
         from models.DynamicPointTransformer import Net
     elif model == "embedding_GCN" or model == "embedding_GCN_allvtx" or model == "embedding_GCN_nocheating":
         from models.embedding_GCN import Net
+    elif model == "vtx_pred_model" or model == "vtx_pred_model2":
+        from models.emb_v2 import Net
     else:
         raise(Exception("Model not found"))
     return Net

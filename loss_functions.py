@@ -58,7 +58,7 @@ def embedding_loss(pfc_enc, vtx_enc, true_vtx_id, pfc_batch, vtx_batch, print_bo
         print("Pfc loss: {:2f}, Vtx loss: {:2f}, Regularization loss: {:2f}".format(total_pfc_loss.item(), total_vtx_loss.item(), reg_loss.item()))
     return (total_pfc_loss + total_vtx_loss + reg_loss)/10
 
-def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
+def contrastive_loss(pfc_enc, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
     '''
     Calculate the contrastive loss
     input:
@@ -77,10 +77,10 @@ def contrastive_loss(pfc_enc, vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_
     random_indices2 = random_perm[num_pfc:2*num_pfc]
     pfc_enc_1 = pfc_enc[random_indices1, :]
     pfc_enc_2 = pfc_enc[random_indices2, :]
-    vtx_id_1 = vtx_id[random_indices1]
-    vtx_id_2 = vtx_id[random_indices2]
+    vtx_id_1 = true_vtx_id[random_indices1]
+    vtx_id_2 = true_vtx_id[random_indices2]
     # number of unique vertices
-    num_vtx = vtx_id.max().item() + 1
+    num_vtx = true_vtx_id.max().item() + 1
     # get a mask which is c if the particles are the same and -1 if they are different
     mask = -1+(c1*num_vtx+1)*(vtx_id_1 == vtx_id_2).float()
     euclidean_dist = F.pairwise_distance(pfc_enc_1, pfc_enc_2)
