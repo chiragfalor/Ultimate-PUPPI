@@ -4,7 +4,7 @@ BATCHSIZE = 32
 
 with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
-data_test = UPuppiV0(home_dir + 'test/')
+data_test = UPuppiV0(home_dir + 'train/')
 test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                              follow_batch=['x_pfc', 'x_vtx'])
 

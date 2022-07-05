@@ -17,7 +17,7 @@ class Net(nn.Module):
         self.k1 = k1
         self.k2 = k2
         self.vtx_encode = nn.Sequential(
-            nn.Linear(4, hidden_dim//2),
+            nn.Linear(5, hidden_dim//2),
             nn.SiLU(),
             nn.Linear(hidden_dim//2, hidden_dim),
             nn.SiLU(),

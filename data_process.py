@@ -25,9 +25,9 @@ for fileid in range(1, 100):
     #     file_out = h5py.File("/work/submit/cfalor/upuppi/deepjet-geometric/test/raw/samples_v0_dijet_5.h5", "w")
 #     else:
     try:
-        # file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30_bare/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file = h5py.File(home_dir + 'train2/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file_out = h5py.File(home_dir + 'train/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        # file_out = h5py.File(home_dir + 'train/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
