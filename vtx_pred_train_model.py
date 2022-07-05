@@ -6,10 +6,10 @@ start_time = time.time()
 
 data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
-BATCHSIZE = 64
+BATCHSIZE = 32
 
 
-model_name = "vtx_pred_model2"
+model_name = "vtx_pred_model_puppi"
 
 
 print("Training {}...".format(model_name))
@@ -44,12 +44,12 @@ def train(model, optimizer, loss_fn, neutral_weight = 1):
         data.to(device)
         optimizer.zero_grad()
         pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        # vtx_embeddings = None  # uncomment if you want to use contrastive loss
+        vtx_embeddings = None  # uncomment if you want to use contrastive loss
         # loss = loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight)
         if vtx_embeddings is not None:
             loss = loss_fn(pfc_enc = pfc_embeddings, vtx_enc = vtx_embeddings, true_vtx_id = data.truth, pfc_batch = data.x_pfc_batch, vtx_batch = data.x_vtx_batch)
         else:
-            loss = loss_fn(pfc_enc = pfc_embeddings, true_vtx_id = data.truth)
+            loss = loss_fn(pfc_embeddings, data.x_pfc_batch, data.truth, c1 = 0.1)
         # if loss is nan, print everything
         if np.isnan(loss.item()):
             print("Loss is nan")
@@ -87,7 +87,7 @@ for epoch in range(NUM_EPOCHS):
         embedding_loss_weight = 0.01
     else:
         embedding_loss_weight = 0.0
-    train_loss = train(model, optimizer, loss_fn=embedding_loss)
+    train_loss = train(model, optimizer, loss_fn=contrastive_loss)
     state_dicts = {'model':model.state_dict(),
                     'opt':optimizer.state_dict()} 
 

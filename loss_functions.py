@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def embedding_loss(pfc_enc, vtx_enc, true_vtx_id, pfc_batch, vtx_batch, print_bool=False):
+def embedding_loss(pfc_enc, vtx_enc, true_vtx_id, pfc_batch, vtx_batch, neutral_weight = 1, print_bool=False):
     '''
     Args:
         pfc_enc: (particle_count, embedding_dim)
@@ -58,7 +58,34 @@ def embedding_loss(pfc_enc, vtx_enc, true_vtx_id, pfc_batch, vtx_batch, print_bo
         print("Pfc loss: {:2f}, Vtx loss: {:2f}, Regularization loss: {:2f}".format(total_pfc_loss.item(), total_vtx_loss.item(), reg_loss.item()))
     return (total_pfc_loss + total_vtx_loss + reg_loss)/10
 
-def contrastive_loss(pfc_enc, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
+def contrastive_loss(pfc_embeddings, pfc_batch, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
+    '''
+    Args:
+        pfc_embeddings: (num_pfc, embedding_dim)
+        pfc_batch: (num_pfc)
+        true_vtx_id: (num_pfc)
+        num_pfc: number of particles in the batch
+        c1: the weight of the contrastive loss
+        reg_ratio: the weight of the regularization loss
+    Returns:
+        loss: the loss from the minimizing the embedding of the particles to their nearest vertex
+              + the loss from maximizing the embedding of the vertices
+              + regularization loss of the embedding of vertices
+    '''
+    total_contrastive_loss = 0
+    batch_size = pfc_batch.max().item() + 1
+    for i in range(batch_size):
+        # get the batch index of the current batch
+        pfc_indices = (pfc_batch == i)
+        # get the embedding of the pfc, vtx, and truth in the current batch
+        pfc_enc_batch = pfc_embeddings[pfc_indices, :]
+        truth_batch = true_vtx_id[pfc_indices].to(dtype=torch.int64)
+        total_contrastive_loss += contrastive_loss_event(pfc_enc_batch, truth_batch, num_pfc, c1, reg_ratio, print_bool)
+    total_contrastive_loss /= batch_size
+    return total_contrastive_loss
+        
+
+def contrastive_loss_event(pfc_enc, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
     '''
     Calculate the contrastive loss
     input:

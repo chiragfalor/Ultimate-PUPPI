@@ -46,7 +46,7 @@ def get_neural_net(model_name):
         from models.DynamicPointTransformer import Net
     elif model == "embedding_GCN" or model == "embedding_GCN_allvtx" or model == "embedding_GCN_nocheating":
         from models.embedding_GCN import Net
-    elif model == "vtx_pred_model" or model == "vtx_pred_model2":
+    elif model[:14] == "vtx_pred_model":
         from models.emb_v2 import Net
     else:
         raise(Exception("Model not found"))
@@ -57,6 +57,7 @@ def process_data(data):
     '''
     Apply data processing as needed and return the processed data.
     '''
+    data.truth = (data.truth != 0).int()
     return data
     neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
     # randomly select half of the neutral particles
@@ -95,7 +96,7 @@ def vertex_predictor(particle_embedding, pfc_embeddings, true_vertex, k=1):
     return majority_vote
 
 
-def plot_2_embeddings(embeddings1, embeddings2, save_name, color1=None, color2=None, label1=None, label2=None, colored=False):
+def plot_2_embeddings(embeddings1, embeddings2, save_name, color1=None, color2=None, label1=None, label2=None, colored=False, colorbar_label = 'z true'):
     '''
     embeddings1: (n1, embedding_dim)
     embeddings2: (n2, embedding_dim)
@@ -116,8 +117,8 @@ def plot_2_embeddings(embeddings1, embeddings2, save_name, color1=None, color2=N
     if colored:
         plt.scatter(embeddings1_2d[:, 0], embeddings1_2d[:, 1], c=color1, cmap=cm.get_cmap('jet'))
         cbar = plt.colorbar()
-        plt.scatter(embeddings2_2d[:, 0], embeddings2_2d[:, 1], c=color2, cmap=cm.get_cmap('jet'), marker='*', s=100)
-        cbar.set_label('z value')
+        plt.scatter(embeddings2_2d[:, 0], embeddings2_2d[:, 1], c=color2, cmap=cm.get_cmap('jet'), marker='*', s=50)
+        cbar.set_label(colorbar_label)
         
     else:
         plt.scatter(embeddings1_2d[:, 0], embeddings1_2d[:, 1], c='red', marker='.', s=10)
@@ -216,7 +217,7 @@ def plot_z_pred_z_true(df, save_name):
     plt.text(50, -220, "Neutral loss: {:.2f}".format(neutral_loss))
     # slopes
     # plt.text(-20, 200, "Neutral slope: {:.2f}".format(slope))
-    plt.legend(['Charged', 'Neutral'])
+    plt.legend(['Charged', 'Neutral'], loc='upper left')
     plt.xlabel('True z')
     plt.ylabel('Predicted z')
     plt.xlim(-250, 250)
