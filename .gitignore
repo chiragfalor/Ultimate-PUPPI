@@ -134,6 +134,8 @@ test/
 val/
 train2/
 test2/
+train3/
+test3/
 
 # predictions
 *.csv

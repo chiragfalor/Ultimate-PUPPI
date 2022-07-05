@@ -36,7 +36,7 @@ def get_neural_net(model_name):
         from models.model import Net
     elif model[:7] == "modelv2":   # or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata" or model == "modelv2_analysis" or model == "modelv2_random_z":
         from models.modelv2 import Net
-    elif model == "modelv3":
+    elif model[:7] == "modelv3":
         from models.modelv3 import Net
     elif model == "Dynamic_GATv2":
         from models.Dynamic_GATv2 import Net
@@ -55,6 +55,7 @@ def process_data(data):
     '''
     Apply data processing as needed and return the processed data.
     '''
+    return data
     neutral_idx = torch.nonzero(data.x_pfc[:,-2] == 0).squeeze()
     # randomly select half of the neutral particles
     half_neutral_idx = neutral_idx[torch.randperm(neutral_idx.shape[0])[:int(neutral_idx.shape[0]/2)]]
