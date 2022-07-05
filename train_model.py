@@ -19,6 +19,7 @@ model_name = "modelv2_analysis"
 model_name = "modelv2_random_z"
 model_name = "modelv2_less_k"
 model_name = "modelv2_only_pileup"
+model_name = "modelv2_analysis2"
 
 
 print("Training {}...".format(model_name))
@@ -27,7 +28,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-model = get_neural_net(model_name)(pfc_input_dim=13, hidden_dim=320, k1=16, k2=4, dropout=0).to(device)
+model = get_neural_net(model_name)(pfc_input_dim=12, hidden_dim=320, k1=32, k2=16, dropout=0).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)

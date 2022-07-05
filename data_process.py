@@ -101,19 +101,19 @@ for fileid in range(1, 100):
         px = pt * np.cos(phi)
         py = pt * np.sin(phi)
         # replace all 0 E, pt with 1
-        # E[E==0] = 1
-        # pt[pt==0] = 1
-        # assert(np.all(E > 0))
-        # assert(np.all(pt > 0))
-        # log_E = np.log(E)
-        # log_pt = np.log(pt)
+        E[E==0] = 1
+        pt[pt==0] = 1
+        assert(np.all(E > 0))
+        assert(np.all(pt > 0))
+        log_E = np.log(E)
+        log_pt = np.log(pt)
 
 
         # save the processed data in pfs
-        # new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], log_pt[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
+        new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], log_pt[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
         # new features: px, py, eta, log_E, log_pt, q, pid, z
         # new features: px, py, eta, E, pid, q, z
-        new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
+        # new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
     # save the processed data in the file
     
     print("new_pfs shape:", new_pfs.shape)
