@@ -150,6 +150,23 @@ def contrastive_loss_v2(pfc_enc, vtx_id, c1=0.5, c2=1, reg_ratio = 0.01, device 
         raise(ValueError)
     return loss      
 
+def pileup_classification_loss(score, truth, neutral_mask = None, neutral_ratio = 1):
+    '''
+    Calculate the classification loss between primary and pileup particles
+    input:
+    pred: the prediction of the primary vs pileup classification
+    truth: the truth of the primary vs pileup classification
+    neutral_mask: mask with neutral particles
+    neutral_ratio: the ratio of emphasis on neutral particles
+    '''
+    if neutral_mask is None or neutral_ratio == 1:
+        loss = F.binary_cross_entropy_with_logits(score, truth)
+    else:
+        neutral_scores, neutral_truth = score[neutral_mask], truth[neutral_mask]
+        charged_scores, charged_truth = score[~neutral_mask], truth[~neutral_mask]
+        loss = (F.binary_cross_entropy_with_logits(charged_scores, charged_truth) + neutral_ratio*F.binary_cross_entropy_with_logits(neutral_scores, neutral_truth))/(1+neutral_ratio)
+    return loss
+
 
 def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
     '''

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     model_dir = home_dir + 'models/{}/'.format(model_name)
 
     # model params
-    epoch_num = 11
+    epoch_num = 19
     net = get_neural_net(model_name)()
     plot_against = 'z true'
     plot_against = 'vtx id'

@@ -46,7 +46,8 @@ class Net(nn.Module):
             nn.SiLU(),
             nn.Linear(hidden_dim//4, 4),
             nn.SiLU(),
-            nn.Linear(4, 1)
+            nn.Linear(4, 1),
+            nn.Sigmoid()
         )
 
     def forward(self, x_pfc, x_vtx, batch_pfc, batch_vtx):

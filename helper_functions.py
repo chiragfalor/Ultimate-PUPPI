@@ -10,6 +10,7 @@ from PIL import Image
 from tqdm import tqdm
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
+from sklearn import metrics
 
 
 # get home directory path
@@ -48,6 +49,8 @@ def get_neural_net(model_name):
         from models.embedding_GCN import Net
     elif model[:14] == "vtx_pred_model":
         from models.emb_v2 import Net
+    elif model[:6] == "pileup":
+        from models.classification_model_puppi import Net
     else:
         raise(Exception("Model not found"))
     return Net
@@ -248,8 +251,7 @@ def make_model_evolution_gif(net, model_name, data_loader):
     pngs_to_gif(save_dir, model_name + '_evolution')
 
 
-
-def plot_predictions(df, model_name):
+def plot_z_predictions3(df, model_name):
     # make 3 plots:
     # 1. z-prediction vs. z-true
     # 2. z-prediction vs. input_pt
@@ -283,4 +285,34 @@ def plot_predictions(df, model_name):
     plt.close()
 
 
-    
+def binary_roc_auc_score_plot(model, model_name, data_loader):
+    '''
+    model: pytorch model
+    data_loader: pytorch dataloader
+    return: float
+    '''
+    # initialize variables
+    n_batches = len(data_loader)
+    n_samples = 0
+    # initialize arrays
+    y_true = np.array([])
+    y_pred = np.array([])
+    roc_auc_score = 0
+    # loop over batches
+    for batch in tqdm(data_loader):
+        # get data
+        labels = (batch.truth != 0).float().detach().numpy()
+        y_true = np.append(y_true, labels)
+        # get predictions
+        preds = model(batch.x_pfc, batch.x_vtx, batch.x_pfc_batch, batch.x_vtx_batch)[0].detach().numpy()
+        y_pred = np.append(y_pred, preds)
+        n_samples += len(labels)
+
+    # calculate roc_auc_score
+    roc_auc_score = metrics.roc_auc_score(y_true, y_pred)
+    # plot the roc curve
+    metrics.RocCurveDisplay(y_true, y_pred).plot()
+    # add title and save
+    plt.title(model_name + ' roc_auc_score: {:.2f}'.format(roc_auc_score))
+    plt.savefig(home_dir + 'results/{}_roc_curve.png'.format(model_name), bbox_inches='tight')
+    return roc_auc_score
