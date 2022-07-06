@@ -13,7 +13,7 @@ BATCHSIZE = 64
 # model_name = "modelv2_less_k"
 # model_name = "modelv2_only_pileup"
 # model_name = "modelv2_analysis2"
-model_name = "pileup_classifier2"
+model_name = "pileup_classifier_puppi"
 
 
 print("Training {}...".format(model_name))
@@ -23,7 +23,7 @@ print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
 model = get_neural_net(model_name)(dropout=0).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
 with open(model_dir + 'hyperparameters.txt', 'w') as f: 
@@ -50,8 +50,8 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         optimizer.zero_grad()
         score, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         score = score.squeeze()
-        # vtx_embeddings = None  # uncomment if you want to use contrastive loss
-        loss = loss_fn(score, (data.truth != 0).float())
+        vtx_embeddings = None  # uncomment if you want to use contrastive loss
+        loss = loss_fn(data, score, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight)
         # if loss is nan, print everything
         if np.isnan(loss.item()):
             print("Loss is nan")
@@ -61,7 +61,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         train_loss += loss.item()
         if counter % 100 == 1:
             print("Train loss: ", train_loss / counter)
-            # loss_fn(data, z_pred, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight, print_bool = True)
+            loss_fn(data, score, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight, print_bool = True)
     return train_loss / counter
 
 @torch.no_grad()
@@ -81,7 +81,7 @@ def test(model):
         accuracy = (pred == (data.truth != 0).int()).float().mean()
         neutral_mask = (data.x_pfc[:, -2] == 0)
         accuracy_neutral = (pred[neutral_mask] == (data.truth[neutral_mask] != 0).int()).float().mean()
-        test_neutral_accuracy += accuracy_neutral
+        test_neutral_accuracy += accuracy_neutral.item()
         test_accuracy += accuracy.item()
     return test_accuracy / counter, test_neutral_accuracy / counter
 
@@ -95,7 +95,7 @@ for epoch in range(NUM_EPOCHS):
         embedding_loss_weight = 0.01
     else:
         embedding_loss_weight = 0.0
-    train_loss = train(model, optimizer, loss_fn=pileup_classification_loss)
+    train_loss = train(model, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1)
     state_dicts = {'model':model.state_dict(),
                     'opt':optimizer.state_dict()} 
 
@@ -104,7 +104,7 @@ for epoch in range(NUM_EPOCHS):
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
     test_accuracy, test_neutral_accuracy = test(model)
-    print("Epoch: ", epoch, "Train loss: ", train_loss, "Test accuracy: ", test_accuracy, "Test neutral accuracy: ", test_neutral_accuracy)
+    print("Epoch: {:02d}, Train Loss: {:4f}, Test Accuracy: {:2f}%, Test Neutral Accuracy: {:2f}%".format(epoch, train_loss, 100*test_accuracy, 100*test_neutral_accuracy))
     model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy})
 # save the model performance as txt
 with open(model_dir + 'model_performance.txt', 'w') as f:

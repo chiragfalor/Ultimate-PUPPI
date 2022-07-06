@@ -58,7 +58,7 @@ def embedding_loss(pfc_enc, vtx_enc, true_vtx_id, pfc_batch, vtx_batch, neutral_
         print("Pfc loss: {:2f}, Vtx loss: {:2f}, Regularization loss: {:2f}".format(total_pfc_loss.item(), total_vtx_loss.item(), reg_loss.item()))
     return (total_pfc_loss + total_vtx_loss + reg_loss)/10
 
-def contrastive_loss(pfc_embeddings, pfc_batch, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
+def contrastive_loss(pfc_embeddings, pfc_batch, true_vtx_id, num_pfc=64, c1=0.1, reg_ratio = 0.01, print_bool=False):
     '''
     Args:
         pfc_embeddings: (num_pfc, embedding_dim)
@@ -81,8 +81,9 @@ def contrastive_loss(pfc_embeddings, pfc_batch, true_vtx_id, num_pfc=64, c1=1, r
         pfc_enc_batch = pfc_embeddings[pfc_indices, :]
         truth_batch = true_vtx_id[pfc_indices].to(dtype=torch.int64)
         total_contrastive_loss += contrastive_loss_event(pfc_enc_batch, truth_batch, num_pfc, c1, reg_ratio, print_bool)
+        print_bool = False
     total_contrastive_loss /= batch_size
-    return total_contrastive_loss
+    return 0.1*total_contrastive_loss
         
 
 def contrastive_loss_event(pfc_enc, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
@@ -198,3 +199,27 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
     if print_bool:
         print("Total loss: {:.2f}, Embedding loss: {:.2f}, Regression loss: {:.2f}".format(loss, embedding_loss_weight*emb_loss, regression_loss))
     return loss
+
+
+def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
+    '''
+    Computes the combined loss including classification loss and embedding loss
+    '''
+    if embedding_loss_weight > 0:
+        if vtx_embeddings is None:
+            # use contrastive loss if no vertex embedding is provided
+            emb_loss = contrastive_loss(pfc_embeddings, data.x_pfc_batch, (data.truth != 0).int(), print_bool=print_bool)
+        else:
+            # use embedding loss
+            emb_loss = embedding_loss(pfc_embeddings, vtx_embeddings, data.truth.int(), pfc_batch = data.x_pfc_batch, vtx_batch = data.x_vtx_batch, print_bool=print_bool)
+    else:
+        emb_loss = 0
+    # calculate the classification loss
+    
+    neutral_mask = data.x_pfc[:, -2] == 0
+    classification_loss = 100*pileup_classification_loss(score, (data.truth.int() != 0).float(), neutral_mask, neutral_weight)
+    loss = embedding_loss_weight*emb_loss + classification_loss
+    if print_bool:
+        print("Total loss: {:.2f}, Embedding loss: {:.2f}, Classification loss: {:.2f}".format(loss, embedding_loss_weight*emb_loss, classification_loss))
+    return loss
+

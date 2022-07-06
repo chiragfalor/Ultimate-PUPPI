@@ -160,7 +160,7 @@ def pngs_to_gif(png_dir, gif_name, size=(580, 450), fps=5):
     images[0].save(save_loc, save_all=True, append_images=images[1:], duration=1000/fps, loop=0)
 
 
-def save_predictions(net, data_loader, save_name):
+def save_z_predictions(net, data_loader, save_name):
     '''
     Saves the data and predictions of the network for all the data in the data_loader
     '''
@@ -189,6 +189,42 @@ def save_predictions(net, data_loader, save_name):
                 charge = np.concatenate((charge, data.x_pfc[:, -2].detach().cpu().numpy()), axis=0)
     print("Total loss: {}".format(total_loss/len(data_loader)))
     data_dict = {'z_pred': z_pred, 'z_true': z_true, 'charge': charge, 'vtx_truth': vtx_truth}
+    df = pd.DataFrame(data_dict)
+    df.to_csv(home_dir + 'results/{}.csv'.format(save_name), index=False)
+    print("Saved data and predictions to results/{}.csv".format(save_name))
+    return df
+
+
+def save_class_predictions(net, data_loader, save_name):
+    '''
+    Saves the data and predictions of the network for all the data in the data_loader
+    '''
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.to(device)
+    net.eval()
+    total_loss = 0
+    # initialize np arrays to save the data and predictions
+    class_pred = None
+    for data in tqdm(data_loader):
+        data = process_data(data)
+        data = data.to(device)
+        class_actual = (data.truth != 0).float()
+        with torch.no_grad():
+            class_out = nn.Sigmoid()(net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]).squeeze()
+            loss = nn.BCELoss()(class_out, class_actual)
+            total_loss += loss.item()
+            if class_pred is None:
+                class_pred = torch.squeeze(class_out).detach().cpu().numpy()
+                class_true = class_actual.detach().cpu().numpy()
+                vtx_truth = data.truth.detach().cpu().numpy() 
+                charge = data.x_pfc[:, -2].detach().cpu().numpy()
+            else:
+                class_pred = np.concatenate((class_pred, torch.squeeze(class_out).detach().cpu().numpy()), axis=0)
+                class_true = np.concatenate((class_true, class_actual.detach().cpu().numpy()), axis=0)
+                vtx_truth = np.concatenate((vtx_truth, data.truth.detach().cpu().numpy()), axis=0)
+                charge = np.concatenate((charge, data.x_pfc[:, -2].detach().cpu().numpy()), axis=0)
+    print("Total loss: {}".format(total_loss/len(data_loader)))
+    data_dict = {'class_pred': class_pred, 'class_true': class_true, 'charge': charge, 'vtx_truth': vtx_truth}
     df = pd.DataFrame(data_dict)
     df.to_csv(home_dir + 'results/{}.csv'.format(save_name), index=False)
     print("Saved data and predictions to results/{}.csv".format(save_name))
@@ -244,7 +280,7 @@ def make_model_evolution_gif(net, model_name, data_loader):
     for epoch in epoch_list:
         net.load_state_dict(torch.load(model_dir + epoch)['model'])
         save_name = model_name + '/'+ model_name + '_' + epoch[:-3]
-        df = save_predictions(net, data_loader, save_name)
+        df = save_z_predictions(net, data_loader, save_name)
         # df = pd.read_csv(home_dir + 'results/{}.csv'.format(save_name))
         plot_z_pred_z_true(df, save_name)
 
@@ -284,35 +320,39 @@ def plot_z_predictions3(df, model_name):
     plt.savefig(home_dir + 'results/{}_zpred_vs_ztrue.png'.format(model_name), bbox_inches='tight')
     plt.close()
 
+def plot_class_predictions2(df, save_name):
+    # make 2 histograms:
+    # 1. class prediction vs. class true (for all particles)
+    # 2. class prediction vs. class true (for neutral particles)
+    # on the same figure
+    fig, axs = plt.subplots(2, 1, figsize=(10,20))
+    # make a red histogram of primary particles and a blue histogram of pileup particles
+    # primary particles
+    axs[0].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    # pileup particles
+    axs[0].hist(df[df['class_true'] == 1]['class_pred'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[0].set_xlabel('class_pred')
+    axs[0].set_ylabel('count')
+    axs[0].set_title('class_pred vs class_true for all particles')
+    axs[0].legend()
+    # for neutral particles
+    df = df[df['charge'] == 0]
+    axs[1].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[1].hist(df[df['class_true'] == 1]['class_pred'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[1].set_xlabel('class_pred')
+    axs[1].set_ylabel('count')
+    axs[1].set_title('class_pred vs class_true for neutral particles')
+    axs[1].legend()
+    plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
+    plt.close()
+    
 
-def binary_roc_auc_score_plot(model, model_name, data_loader):
-    '''
-    model: pytorch model
-    data_loader: pytorch dataloader
-    return: float
-    '''
-    # initialize variables
-    n_batches = len(data_loader)
-    n_samples = 0
-    # initialize arrays
-    y_true = np.array([])
-    y_pred = np.array([])
-    roc_auc_score = 0
-    # loop over batches
-    for batch in tqdm(data_loader):
-        # get data
-        labels = (batch.truth != 0).float().detach().numpy()
-        y_true = np.append(y_true, labels)
-        # get predictions
-        preds = model(batch.x_pfc, batch.x_vtx, batch.x_pfc_batch, batch.x_vtx_batch)[0].detach().numpy()
-        y_pred = np.append(y_pred, preds)
-        n_samples += len(labels)
-
-    # calculate roc_auc_score
-    roc_auc_score = metrics.roc_auc_score(y_true, y_pred)
-    # plot the roc curve
-    metrics.RocCurveDisplay(y_true, y_pred).plot()
+def plot_binary_roc_auc_score(df, save_name):
+    pred = df.class_pred.values
+    true = df.class_true.values
+    metrics.RocCurveDisplay.from_predictions(true, pred).plot()
+    auc_score = metrics.roc_auc_score(true, pred)
     # add title and save
-    plt.title(model_name + ' roc_auc_score: {:.2f}'.format(roc_auc_score))
-    plt.savefig(home_dir + 'results/{}_roc_curve.png'.format(model_name), bbox_inches='tight')
-    return roc_auc_score
+    plt.title(save_name.split('/')[-1] + '\nAUC score: {:.2f}'.format(auc_score))
+    plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
+    plt.close() 
