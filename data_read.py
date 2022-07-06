@@ -103,6 +103,7 @@ data_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True, follow_b
 # print 5 random samples from the dataset
 
 for batch_idx, data in enumerate(tqdm(data_loader)):
+    break
     print(data)
     print(data.x_pfc.shape)
     print(data.x_vtx)

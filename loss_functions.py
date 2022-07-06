@@ -168,6 +168,22 @@ def pileup_classification_loss(score, truth, neutral_mask = None, neutral_ratio 
         loss = (F.binary_cross_entropy_with_logits(charged_scores, charged_truth) + neutral_ratio*F.binary_cross_entropy_with_logits(neutral_scores, neutral_truth))/(1+neutral_ratio)
     return loss
 
+def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 1):
+    '''
+    Calculate classification loss for multiple vertex prediction
+    input:
+    score : (number of particles, number of classes), score of each particle being in each class
+    truth : (number of particles), the true class of each particle (0-indexed)
+    neutral_mask : (number of particles), mask
+    neutral_ratio : (float), the ratio of emphasis on neutral particles
+    '''
+    if neutral_mask is None or neutral_ratio == 1:
+        loss = F.cross_entropy(score, truth)
+    else:
+        neutral_scores, neutral_truth = score[neutral_mask], truth[neutral_mask]
+        charged_scores, charged_truth = score[~neutral_mask], truth[~neutral_mask]
+        loss = (F.cross_entropy(charged_scores, charged_truth) + neutral_ratio*F.cross_entropy(neutral_scores, neutral_truth))/(1+neutral_ratio)
+    return loss
 
 def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
     '''
@@ -201,14 +217,14 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
     return loss
 
 
-def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
+def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, vtx_classes = 1, print_bool=False):
     '''
     Computes the combined loss including classification loss and embedding loss
     '''
     if embedding_loss_weight > 0:
         if vtx_embeddings is None:
             # use contrastive loss if no vertex embedding is provided
-            emb_loss = contrastive_loss(pfc_embeddings, data.x_pfc_batch, (data.truth != 0).int(), print_bool=print_bool)
+            emb_loss = contrastive_loss(pfc_embeddings, data.x_pfc_batch, data.truth.int(), print_bool=print_bool)
         else:
             # use embedding loss
             emb_loss = embedding_loss(pfc_embeddings, vtx_embeddings, data.truth.int(), pfc_batch = data.x_pfc_batch, vtx_batch = data.x_vtx_batch, print_bool=print_bool)
@@ -217,7 +233,9 @@ def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = N
     # calculate the classification loss
     
     neutral_mask = data.x_pfc[:, -2] == 0
-    classification_loss = 100*pileup_classification_loss(score, (data.truth.int() != 0).float(), neutral_mask, neutral_weight)
+    truth = (data.truth != 0).long()   # process truth here
+    classification_loss = 100*multiclassification_loss(score, truth, neutral_mask, neutral_weight)
+    # classification_loss = 100*pileup_classification_loss(score, truth, neutral_mask, neutral_weight)
     loss = embedding_loss_weight*emb_loss + classification_loss
     if print_bool:
         print("Total loss: {:.2f}, Embedding loss: {:.2f}, Classification loss: {:.2f}".format(loss, embedding_loss_weight*emb_loss, classification_loss))

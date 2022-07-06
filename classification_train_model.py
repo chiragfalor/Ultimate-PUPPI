@@ -75,7 +75,7 @@ def test(model):
     for counter, data in enumerate(tqdm(test_loader)):
         data = process_data(data)
         data.to(device)
-        score, batch, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
         score = score.squeeze()
         pred = (score > 0).int()
         accuracy = (pred == (data.truth != 0).int()).float().mean()
@@ -104,7 +104,7 @@ for epoch in range(NUM_EPOCHS):
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
     test_accuracy, test_neutral_accuracy = test(model)
-    print("Epoch: {:02d}, Train Loss: {:4f}, Test Accuracy: {:2f}%, Test Neutral Accuracy: {:2f}%".format(epoch, train_loss, 100*test_accuracy, 100*test_neutral_accuracy))
+    print("Epoch: {:02d}, Train Loss: {:4f}, Test Accuracy: {:.2%}, Test Neutral Accuracy: {:.2%}".format(epoch, train_loss, test_accuracy, test_neutral_accuracy))
     model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy})
 # save the model performance as txt
 with open(model_dir + 'model_performance.txt', 'w') as f:

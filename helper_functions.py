@@ -51,6 +51,8 @@ def get_neural_net(model_name):
         from models.emb_v2 import Net
     elif model[:6] == "pileup":
         from models.classification_model_puppi import Net
+    elif model[:15] == "multiclassifier":
+        from models.multiclass_model import Net
     else:
         raise(Exception("Model not found"))
     return Net
@@ -325,34 +327,40 @@ def plot_class_predictions2(df, save_name):
     # 1. class prediction vs. class true (for all particles)
     # 2. class prediction vs. class true (for neutral particles)
     # on the same figure
-    fig, axs = plt.subplots(2, 1, figsize=(10,20))
+    fig, axs = plt.subplots(2, 1, figsize=(10,12))
     # make a red histogram of primary particles and a blue histogram of pileup particles
-    # primary particles
-    axs[0].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
-    # pileup particles
     axs[0].hist(df[df['class_true'] == 1]['class_pred'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[0].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[0].set_xlabel('class_pred')
     axs[0].set_ylabel('count')
     axs[0].set_title('class_pred vs class_true for all particles')
     axs[0].legend()
     # for neutral particles
     df = df[df['charge'] == 0]
-    axs[1].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[1].hist(df[df['class_true'] == 1]['class_pred'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[1].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[1].set_xlabel('class_pred')
     axs[1].set_ylabel('count')
     axs[1].set_title('class_pred vs class_true for neutral particles')
     axs[1].legend()
+    # fig.suptitle(save_name.split('/')[-1])
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
     plt.close()
-    
+
 
 def plot_binary_roc_auc_score(df, save_name):
     pred = df.class_pred.values
     true = df.class_true.values
-    metrics.RocCurveDisplay.from_predictions(true, pred).plot()
-    auc_score = metrics.roc_auc_score(true, pred)
+    # metrics.RocCurveDisplay.from_predictions(true, pred).plot()
+    fpr, tpr, thresholds = metrics.roc_curve(true, pred)
+    roc_auc = metrics.auc(fpr, tpr)
+    plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
     # add title and save
-    plt.title(save_name.split('/')[-1] + '\nAUC score: {:.2f}'.format(auc_score))
+    plt.title(save_name.split('/')[-1] + '\nAUC score: {:.2f}'.format(roc_auc))
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
-    plt.close() 
+    plt.close()
