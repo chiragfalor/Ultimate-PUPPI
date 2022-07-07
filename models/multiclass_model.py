@@ -5,7 +5,7 @@ from torch_geometric.nn.conv import DynamicEdgeConv
 
 
 class Net(nn.Module):
-    def __init__(self, hidden_dim=160, pfc_input_dim=12, vtx_classes = 1, dropout=0.3, k1 = 32, k2 = 16, aggr = 'mean'):
+    def __init__(self, hidden_dim=160, extra_charged_features = 1, pfc_input_dim=12, vtx_classes = 1, dropout=0.3, k1 = 32, k2 = 16, aggr = 'mean'):
         super(Net, self).__init__()
         self.hidden_dim = hidden_dim
         self.pfc_input_dim = pfc_input_dim
@@ -38,8 +38,11 @@ class Net(nn.Module):
             k=k1, aggr = aggr
         )
 
+        # self.charged_pfc_encode_2 = nn.Sequential(nn.Linear(hidden_dim + extra_charged_features, hidden_dim))
+        # self.neutral_pfc_encode_2 = nn.Sequential(nn.Linear(hidden_dim, hidden_dim))
+
         self.conv2 = DynamicEdgeConv(
-            nn=nn.Sequential(nn.Linear(2*(hidden_dim+pfc_input_dim-1), hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)),
+            nn=nn.Sequential(nn.Linear(2*(hidden_dim), hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)),
             k=k2, aggr = aggr)
 
         self.vtx_encode_2 = nn.Sequential(
@@ -75,6 +78,8 @@ class Net(nn.Module):
         for i in range(batch_size):
             # select the top self.vtx_classes vertices for each batch
             target_vertices = vtx_enc[vtx_batch == i, :][:self.vtx_classes]
+            if target_vertices.shape[0] < self.vtx_classes:
+                raise(ValueError('Not enough vertices in batch'))
             # get the scores of the PFs for the batch
             pfc_scores = self.vtx_scores_from_encodings(pfc_enc[pfc_batch == i, :], target_vertices)
             # add the scores to the batch scores
@@ -105,8 +110,11 @@ class Net(nn.Module):
         # create a representation of PFs to clusters
         x_pfc_euc_enc = self.conv(x_pfc_init_enc, batch_pfc)
         x_pfc_euc_enc = F.dropout(x_pfc_euc_enc, p=self.dropout, training=self.training)
-        concat_feats = torch.cat([x_pfc[:, :-1], x_pfc_euc_enc], dim=1)
         
+        
+        # concat_feats = torch.cat([x_pfc[:, :-1], x_pfc_euc_enc], dim=1)
+        # concat_feats = self.charged_pfc_encode_2(torch.cat([x_pfc[:, -1:], x_pfc_euc_enc], dim=1))*charged_mask + self.neutral_pfc_encode_2(x_pfc_euc_enc)*neutral_mask
+        concat_feats = x_pfc_euc_enc
 
         charged_mask = (x_pfc[:, -2] != 0)
         charged_concat_feats, charged_batch = concat_feats[charged_mask], batch_pfc[charged_mask]
@@ -118,4 +126,4 @@ class Net(nn.Module):
         x_pfc_final_enc = self.pfc_encode_2(feats2)
         scores = self.pfc_scores_from_top_vtxs(x_pfc_final_enc, x_vtx_final_enc, batch_pfc, batch_vtx)
 
-        return scores, x_pfc_euc_enc, x_vtx_euc_enc
+        return scores, concat_feats, x_vtx_euc_enc

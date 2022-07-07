@@ -8,9 +8,9 @@ data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
 BATCHSIZE = 64
 
-model_name = "multiclassifier_puppi"
+model_name = "multiclassifier_puppi_2_vtx"
 
-vtx_classes = 1
+vtx_classes = 2
 
 
 print("Training {}...".format(model_name))
@@ -28,10 +28,8 @@ with open(model_dir + 'hyperparameters.txt', 'w') as f:
 
 
 
-train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True,
-                          follow_batch=['x_pfc', 'x_vtx'])
-test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
-                         follow_batch=['x_pfc', 'x_vtx'])
+train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
+test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 
 
 
@@ -74,7 +72,7 @@ def test(model):
         data.to(device)
         score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
         score = score.squeeze()
-        pred = (score[:, 0] < 0.5).int()
+        pred = (score[:, 0] < 0).int()
         accuracy = (pred == (data.truth != 0).int()).float().mean()
         neutral_mask = (data.x_pfc[:, -2] == 0)
         accuracy_neutral = (pred[neutral_mask] == (data.truth[neutral_mask] != 0).int()).float().mean()
@@ -83,7 +81,7 @@ def test(model):
     return test_accuracy / counter, test_neutral_accuracy / counter
 
 
-NUM_EPOCHS = 20
+NUM_EPOCHS = 40
 
 model_performance = []
 

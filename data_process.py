@@ -14,7 +14,7 @@ with open('home_path.txt', 'r') as f:
 # if __name__ == '__main__':
 #     file = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/notr/samples_v0_dijet_48.h5", "r")
 #     file_out = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/raw/samples_v0_dijet_48.h5", "w")
-for fileid in range(1, 70):
+for fileid in range(1, 47):
 #     if fileid == 40:
 #         file = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/notr/samples_v0_dijet_4.h5", "r")
 #         # make a new file to store the processed data
@@ -26,9 +26,9 @@ for fileid in range(1, 70):
 #     else:
     try:
         # file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file = h5py.File(home_dir + 'test3/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file = h5py.File(home_dir + 'train3/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
         # file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
-        file_out = h5py.File(home_dir + 'test/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file_out = h5py.File(home_dir + 'train/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -38,12 +38,7 @@ for fileid in range(1, 70):
         print(e)
         continue
     # copy the header from the original file
-    for key in file.keys():
-        if key == "vtx" or key == "z" or key == "truth":
-            file_out.create_dataset(key, data=file[key][:])
-        elif key=="n":
-            # it is the number of events, scalar
-            file_out.create_dataset(key, data=file[key])
+    
 
     # process the data
     # pfs: coordinates of particles in the event
@@ -51,7 +46,20 @@ for fileid in range(1, 70):
     # pt, eta, phi, E, pid, charge, z-position for pfs
 
     with file as f:
-        pfs = f["pfs"][:]
+        pfs = f["pfs"][:, :1000, :]
+        vtx = f["vtx"][:, :50]
+        truth = f["truth"][:, :1000]
+        z = f["z"][:, :1000]
+
+        # for each event, get the max truth value
+        max_truth = truth.max(axis=1)
+        # discard events with max truth < 5
+        nice_event_idx = (max_truth >= 4)
+        pfs = pfs[nice_event_idx]
+        vtx = vtx[nice_event_idx]
+        truth = truth[nice_event_idx]
+        z = z[nice_event_idx]
+
 
         # one hot encode the pid
         # pid takes values 0, 1, 2, 3, 4, -13/13
@@ -119,6 +127,10 @@ for fileid in range(1, 70):
     
     print("new_pfs shape:", new_pfs.shape)
     file_out.create_dataset("pfs", data=new_pfs)
+    file_out.create_dataset("vtx", data=vtx)
+    file_out.create_dataset("truth", data=truth)
+    file_out.create_dataset("z", data=z)
+    file_out.create_dataset('n', data=pfs.shape[0], dtype='i8')
 
 
     # save the file

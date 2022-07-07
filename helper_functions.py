@@ -212,21 +212,26 @@ def save_class_predictions(net, data_loader, save_name):
         data = data.to(device)
         class_actual = (data.truth != 0).float()
         with torch.no_grad():
-            class_out = nn.Sigmoid()(net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]).squeeze()
-            loss = nn.BCELoss()(class_out, class_actual)
+            scores = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+            class_out = nn.Softmax(dim=1)(scores)
+            loss = nn.BCELoss()(class_out[:, 1], class_actual)
             total_loss += loss.item()
             if class_pred is None:
-                class_pred = torch.squeeze(class_out).detach().cpu().numpy()
+                class_pred = class_out.detach().cpu().numpy()
                 class_true = class_actual.detach().cpu().numpy()
                 vtx_truth = data.truth.detach().cpu().numpy() 
                 charge = data.x_pfc[:, -2].detach().cpu().numpy()
             else:
-                class_pred = np.concatenate((class_pred, torch.squeeze(class_out).detach().cpu().numpy()), axis=0)
+                class_pred = np.concatenate((class_pred, class_out.detach().cpu().numpy()), axis=0)
                 class_true = np.concatenate((class_true, class_actual.detach().cpu().numpy()), axis=0)
                 vtx_truth = np.concatenate((vtx_truth, data.truth.detach().cpu().numpy()), axis=0)
                 charge = np.concatenate((charge, data.x_pfc[:, -2].detach().cpu().numpy()), axis=0)
     print("Total loss: {}".format(total_loss/len(data_loader)))
-    data_dict = {'class_pred': class_pred, 'class_true': class_true, 'charge': charge, 'vtx_truth': vtx_truth}
+    data_dict = {'class_true': class_true, 'charge': charge, 'vtx_truth': vtx_truth}
+    # add the class predictions to the data_dict
+    for i in range(class_pred.shape[1]):
+        data_dict['class_pred_{}'.format(i)] = class_pred[:, i]
+    
     df = pd.DataFrame(data_dict)
     df.to_csv(home_dir + 'results/{}.csv'.format(save_name), index=False)
     print("Saved data and predictions to results/{}.csv".format(save_name))
@@ -329,16 +334,16 @@ def plot_class_predictions2(df, save_name):
     # on the same figure
     fig, axs = plt.subplots(2, 1, figsize=(10,12))
     # make a red histogram of primary particles and a blue histogram of pileup particles
-    axs[0].hist(df[df['class_true'] == 1]['class_pred'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
-    axs[0].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[0].hist(1-df[df['class_true'] == 1]['class_pred_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[0].hist(1-df[df['class_true'] == 0]['class_pred_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[0].set_xlabel('class_pred')
     axs[0].set_ylabel('count')
     axs[0].set_title('class_pred vs class_true for all particles')
     axs[0].legend()
     # for neutral particles
     df = df[df['charge'] == 0]
-    axs[1].hist(df[df['class_true'] == 1]['class_pred'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
-    axs[1].hist(df[df['class_true'] == 0]['class_pred'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[1].hist(1-df[df['class_true'] == 1]['class_pred_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[1].hist(1-df[df['class_true'] == 0]['class_pred_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[1].set_xlabel('class_pred')
     axs[1].set_ylabel('count')
     axs[1].set_title('class_pred vs class_true for neutral particles')
@@ -349,15 +354,19 @@ def plot_class_predictions2(df, save_name):
 
 
 def plot_binary_roc_auc_score(df, save_name):
-    pred = df.class_pred.values
+    pred = 1-df.class_pred_0.values
     true = df.class_true.values
     # metrics.RocCurveDisplay.from_predictions(true, pred).plot()
     fpr, tpr, thresholds = metrics.roc_curve(true, pred)
     roc_auc = metrics.auc(fpr, tpr)
+    # plot log linear ROC curve
     plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
+    # set y scale to logit
+    # plt.yscale('logit')
+
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     # add title and save

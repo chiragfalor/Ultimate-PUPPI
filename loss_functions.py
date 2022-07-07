@@ -233,7 +233,12 @@ def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = N
     # calculate the classification loss
     
     neutral_mask = data.x_pfc[:, -2] == 0
-    truth = (data.truth != 0).long()   # process truth here
+    # truth = (data.truth != 0).long()   # process truth here
+    truth = data.truth.int()
+    # clip the truth to the number of classes
+    truth = truth.clamp(max = vtx_classes)
+    # replace truth -1 to truth = vtx_classes
+    truth[truth == -1] = vtx_classes
     classification_loss = 100*multiclassification_loss(score, truth, neutral_mask, neutral_weight)
     # classification_loss = 100*pileup_classification_loss(score, truth, neutral_mask, neutral_weight)
     loss = embedding_loss_weight*emb_loss + classification_loss
