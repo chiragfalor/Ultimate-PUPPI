@@ -13,7 +13,6 @@ class Net(nn.Module):
         self.dropout = dropout
         self.vtx_classes = vtx_classes
 
-
         self.vtx_encode_1 = nn.Sequential(
             nn.Linear(5, hidden_dim//4),
             nn.SiLU(),

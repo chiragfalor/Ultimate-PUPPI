@@ -2,7 +2,7 @@ from helper_functions import *
 
 BATCHSIZE = 32
 if __name__ == "__main__":
-    epoch_to_load = 38
+    epoch_to_load = 39
     model_name = "DynamicPointTransformer"
     # model_name = 'modelv2_analysis'
     model_name = 'modelv3_first_try'
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # model_name = 'multiclassifier_puppi_with_concat_z'
 
 
-    net = get_neural_net(model_name)(dropout=0)
+    net = get_neural_net(model_name)(dropout=0, vtx_classes=2)
 
     data_test = UPuppiV0(home_dir + "test/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
@@ -36,14 +36,10 @@ if not os.path.exists(home_dir+'results/'+model_name): os.makedirs(home_dir+'res
 # # get df by uncommenting one of the following lines
 # df = save_z_predictions(net, test_loader, save_name)
 df = save_class_predictions(net, test_loader, save_name)
-# df = pd.read_csv(home_dir + 'results/{}.csv'.format(save_name))
+df = pd.read_csv(home_dir + 'results/{}.csv'.format(save_name))
 # select particles with vtx_truth == 0
 # df = df[df['vtx_truth'] != 0]
 print(df.head())
 # plot_z_pred_z_true(df, save_name)
 
-plot_class_predictions2(df, save_name + '_class_preds')
-plot_binary_roc_auc_score(df, save_name + '_roc')
-# get only the neutrals
-df = df[df['charge'] == 0]
-plot_binary_roc_auc_score(df, save_name + '_roc_neutrals')
+plot_multiclassification_metrics(df, save_name)

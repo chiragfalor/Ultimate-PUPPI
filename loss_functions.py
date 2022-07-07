@@ -177,12 +177,27 @@ def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 
     neutral_mask : (number of particles), mask
     neutral_ratio : (float), the ratio of emphasis on neutral particles
     '''
+    vtx_classes = score.shape[1]
+    # weight the loss function based on inversely number of particles in each class
+    def get_weights(truth):
+        # get number of classes
+        try:
+            weights = torch.zeros(vtx_classes).to(truth.device)
+            for i in range(vtx_classes):
+                weights[i] = 1/torch.sum(truth == i).item()
+            weights = weights/torch.sum(weights)
+            return weights
+        except:
+            print("Error in weighting loss function")
+            return None
+
+
     if neutral_mask is None or neutral_ratio == 1:
-        loss = F.cross_entropy(score, truth)
+        loss = F.cross_entropy(score, truth, weight=get_weights(truth))
     else:
         neutral_scores, neutral_truth = score[neutral_mask], truth[neutral_mask]
         charged_scores, charged_truth = score[~neutral_mask], truth[~neutral_mask]
-        loss = (F.cross_entropy(charged_scores, charged_truth) + neutral_ratio*F.cross_entropy(neutral_scores, neutral_truth))/(1+neutral_ratio)
+        loss = (F.cross_entropy(charged_scores, charged_truth, get_weights(charged_truth)) + neutral_ratio*F.cross_entropy(neutral_scores, neutral_truth, get_weights(neutral_truth)))/(1+neutral_ratio)
     return loss
 
 def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):

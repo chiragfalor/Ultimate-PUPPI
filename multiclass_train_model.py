@@ -8,7 +8,7 @@ data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
 BATCHSIZE = 64
 
-model_name = "multiclassifier_puppi_2_vtx"
+model_name = "multiclassifier_puppi_2_vtx_weighted"
 
 vtx_classes = 2
 

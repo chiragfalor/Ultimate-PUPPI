@@ -11,6 +11,7 @@ from tqdm import tqdm
 from upuppi_v0_dataset import UPuppiV0
 from torch_geometric.data import DataLoader
 from sklearn import metrics
+import seaborn as sn
 
 
 # get home directory path
@@ -223,7 +224,7 @@ def save_class_predictions(net, data_loader, save_name):
         data = process_data(data)
         data = data.to(device)
         with torch.no_grad():
-            scores_batch = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+            scores_batch, pfc_emb, vtx_emb = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
             vtx_classes = scores_batch.shape[1] - 1
             class_prob_batch = nn.Softmax(dim=1)(scores_batch)
             class_true_batch = process_truth(data.truth, vtx_classes).long()
@@ -372,10 +373,9 @@ def plot_class_predictions2(df, save_name):
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
     plt.close()
 
-
 def plot_binary_roc_auc_score(df, save_name):
     pred = 1-df.class_prob_0.values
-    true = df.class_true.values
+    true = (df.class_true.values != 0).astype(int)
     # metrics.RocCurveDisplay.from_predictions(true, pred).plot()
     fpr, tpr, thresholds = metrics.roc_curve(true, pred)
     roc_auc = metrics.auc(fpr, tpr)
@@ -393,3 +393,36 @@ def plot_binary_roc_auc_score(df, save_name):
     plt.title(save_name.split('/')[-1] + '\nAUC score: {:.2f}'.format(roc_auc))
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
     plt.close()
+
+def plot_confusion_matrix(df, save_name):
+    # make a confusion matrix
+    # 1. confusion matrix for all particles
+    # 2. confusion matrix for neutral particles
+    # on the same figure
+    fig, axs = plt.subplots(2, 1, figsize=(10,12))
+    conf_mat = metrics.confusion_matrix(df.class_true.values, df.pred.values)
+    # plot the confusion matrix
+    sn.heatmap(conf_mat, annot=True, fmt='d', ax=axs[0])
+    axs[0].set_title('confusion matrix for all particles')
+    # label the axes
+    axs[0].set_xlabel('pred')
+    axs[0].set_ylabel('true')
+    # for neutral particles
+    # make a confusion matrix
+    conf_mat = metrics.confusion_matrix(df[df['charge'] == 0].class_true.values, df[df['charge'] == 0].pred.values)
+    # plot the confusion matrix
+    sn.heatmap(conf_mat, annot=True, fmt='d', ax=axs[1])
+    axs[1].set_title('confusion matrix for neutral particles')
+    # label the axes
+    axs[1].set_xlabel('pred')
+    axs[1].set_ylabel('true')
+    plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
+    plt.close()
+
+def plot_multiclassification_metrics(df, save_name):
+    plot_confusion_matrix(df, save_name+'_confusion_matrix')
+    plot_class_predictions2(df, save_name + '_class_preds')
+    plot_binary_roc_auc_score(df, save_name + '_roc')
+    # roc for neutrals
+    df = df[df['charge'] == 0]
+    plot_binary_roc_auc_score(df, save_name + '_roc_neutrals')
