@@ -234,7 +234,7 @@ def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = N
     
     neutral_mask = data.x_pfc[:, -2] == 0
     # truth = (data.truth != 0).long()   # process truth here
-    truth = data.truth.int()
+    truth = data.truth.long()
     # clip the truth to the number of classes
     truth = truth.clamp(max = vtx_classes)
     # replace truth -1 to truth = vtx_classes

@@ -80,6 +80,18 @@ def process_data(data):
     # data.x_vtx_batch = data.x_vtx_batch[1:]
     return data
 
+def process_truth(truth, vtx_classes):
+    '''
+    truth: (N)
+    vtx_classes: int
+    return: (N)
+    clamps the truth to the number of vertex classes + pileup vertex
+    '''
+    # clamp the truth to vtx_classes
+    truth = torch.clamp(truth, max=vtx_classes)
+    # for truth -1 (pileup), make it vtx_classes
+    truth[truth == -1] = vtx_classes
+    return truth
 
 def vertex_predictor(particle_embedding, pfc_embeddings, true_vertex, k=1):
     '''
@@ -206,32 +218,40 @@ def save_class_predictions(net, data_loader, save_name):
     net.eval()
     total_loss = 0
     # initialize np arrays to save the data and predictions
-    class_pred = None
+    class_prob = None
     for data in tqdm(data_loader):
         data = process_data(data)
         data = data.to(device)
-        class_actual = (data.truth != 0).float()
         with torch.no_grad():
-            scores = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
-            class_out = nn.Softmax(dim=1)(scores)
-            loss = nn.BCELoss()(class_out[:, 1], class_actual)
-            total_loss += loss.item()
-            if class_pred is None:
-                class_pred = class_out.detach().cpu().numpy()
-                class_true = class_actual.detach().cpu().numpy()
-                vtx_truth = data.truth.detach().cpu().numpy() 
-                charge = data.x_pfc[:, -2].detach().cpu().numpy()
+            scores_batch = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+            vtx_classes = scores_batch.shape[1] - 1
+            class_prob_batch = nn.Softmax(dim=1)(scores_batch)
+            class_true_batch = process_truth(data.truth, vtx_classes).long()
+            pred_batch = torch.argmax(class_prob_batch, dim=1)
+            if class_prob is None:
+                class_prob = class_prob_batch
+                class_true = class_true_batch
+                pred = pred_batch
+                vtx_truth = data.truth
+                scores = scores_batch
+                charge = data.x_pfc[:, -2]
             else:
-                class_pred = np.concatenate((class_pred, class_out.detach().cpu().numpy()), axis=0)
-                class_true = np.concatenate((class_true, class_actual.detach().cpu().numpy()), axis=0)
-                vtx_truth = np.concatenate((vtx_truth, data.truth.detach().cpu().numpy()), axis=0)
-                charge = np.concatenate((charge, data.x_pfc[:, -2].detach().cpu().numpy()), axis=0)
-    print("Total loss: {}".format(total_loss/len(data_loader)))
-    data_dict = {'class_true': class_true, 'charge': charge, 'vtx_truth': vtx_truth}
+                class_prob = torch.cat((class_prob, class_prob_batch), dim=0)
+                class_true = torch.cat((class_true, class_true_batch), dim=0)
+                pred = torch.cat((pred, pred_batch), dim=0)
+                vtx_truth = torch.cat((vtx_truth, data.truth), dim=0)
+                scores = torch.cat((scores, scores_batch), dim=0)
+                charge = torch.cat((charge, data.x_pfc[:, -2]), dim=0)
+    # cross entropy loss
+    total_loss = nn.CrossEntropyLoss()(scores, class_true)
+    print("Total loss: {}".format(total_loss), "with {} vertex classes".format(vtx_classes))
+    data_dict = {'class_true': class_true, 'charge': charge, 'pred': pred, 'vtx_truth': vtx_truth}
     # add the class predictions to the data_dict
-    for i in range(class_pred.shape[1]):
-        data_dict['class_pred_{}'.format(i)] = class_pred[:, i]
-    
+    for i in range(class_prob.shape[1]):
+        data_dict['class_prob_{}'.format(i)] = class_prob[:, i]
+    # convert all tensors to numpy to be able to save dataframe
+    for key in data_dict:
+        data_dict[key] = data_dict[key].detach().cpu().numpy()
     df = pd.DataFrame(data_dict)
     df.to_csv(home_dir + 'results/{}.csv'.format(save_name), index=False)
     print("Saved data and predictions to results/{}.csv".format(save_name))
@@ -334,16 +354,16 @@ def plot_class_predictions2(df, save_name):
     # on the same figure
     fig, axs = plt.subplots(2, 1, figsize=(10,12))
     # make a red histogram of primary particles and a blue histogram of pileup particles
-    axs[0].hist(1-df[df['class_true'] == 1]['class_pred_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
-    axs[0].hist(1-df[df['class_true'] == 0]['class_pred_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[0].hist(1-df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[0].hist(1-df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[0].set_xlabel('class_pred')
     axs[0].set_ylabel('count')
     axs[0].set_title('class_pred vs class_true for all particles')
     axs[0].legend()
     # for neutral particles
     df = df[df['charge'] == 0]
-    axs[1].hist(1-df[df['class_true'] == 1]['class_pred_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
-    axs[1].hist(1-df[df['class_true'] == 0]['class_pred_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[1].hist(1-df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
+    axs[1].hist(1-df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
     axs[1].set_xlabel('class_pred')
     axs[1].set_ylabel('count')
     axs[1].set_title('class_pred vs class_true for neutral particles')
@@ -354,7 +374,7 @@ def plot_class_predictions2(df, save_name):
 
 
 def plot_binary_roc_auc_score(df, save_name):
-    pred = 1-df.class_pred_0.values
+    pred = 1-df.class_prob_0.values
     true = df.class_true.values
     # metrics.RocCurveDisplay.from_predictions(true, pred).plot()
     fpr, tpr, thresholds = metrics.roc_curve(true, pred)

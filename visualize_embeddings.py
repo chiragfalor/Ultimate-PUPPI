@@ -9,12 +9,13 @@ if __name__ == '__main__':
     data_test = UPuppiV0("/work/submit/cfalor/upuppi/Ultimate-PUPPI/test/")
 
     model_name = "vtx_pred_model_puppi"
+    model_name = 'multiclassifier_puppi_2_vtx'
 
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model_name)
 
     # model params
-    epoch_num = 19
+    epoch_num = 38
     net = get_neural_net(model_name)()
     plot_against = 'z true'
     plot_against = 'vtx id'
@@ -27,13 +28,17 @@ if __name__ == '__main__':
         if plot_against == 'z true':
             pfc_truth = data.y.detach().numpy()
         elif plot_against == 'vtx id':
-            pfc_truth = data.truth.detach().numpy()
-            pfc_truth = (data.truth != 0).int().detach().numpy()
+            pfc_truth = data.truth.int().detach().numpy()
+            # clamp truth at 2
+            pfc_truth[pfc_truth > 2] = 2
+            pfc_truth[pfc_truth < 0] = 2
+            # pfc_truth = (data.truth != 0).int().detach().numpy()
         else:
             raise ValueError("plot_against must be 'z' or 'vtx_id'")
 
-        pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        # pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         # out, batch, pfc_embeddings = net(data.x_pfc, data.x_pfc_batch)
+        out, pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
 
         # separate neutral and charged particles
         neutral_idx, charged_idx = (data.x_pfc[:,-2] == 0), (data.x_pfc[:,-2] != 0)
@@ -41,8 +46,8 @@ if __name__ == '__main__':
         neutral_truth, charged_truth = pfc_truth[neutral_idx], pfc_truth[charged_idx]
         
         # plot the embeddings
-        plot_2_embeddings(neutral_embeddings, charged_embeddings,'{}_{}_embeddings.png'.format(model_name, epoch_num), 
+        plot_2_embeddings(neutral_embeddings, charged_embeddings,'{}/{}_embeddings.png'.format(model_name, epoch_num), 
                             neutral_truth, charged_truth, "neutral", "charged")
-        plot_2_embeddings(pfc_embeddings, vtx_embeddings, '{}_{}_vtx_pfc_emb.png'.format(model_name, epoch_num), pfc_truth, np.arange(len(vtx_embeddings)), "pfc", "vtx", colored = True)
-        plot_2_embeddings(neutral_embeddings, charged_embeddings,'{}_{}_emb_color.png'.format(model_name, epoch_num), 
+        plot_2_embeddings(pfc_embeddings, vtx_embeddings, '{}/{}_vtx_pfc_emb.png'.format(model_name, epoch_num), pfc_truth, np.arange(len(vtx_embeddings)), "pfc", "vtx", colored = True)
+        plot_2_embeddings(neutral_embeddings, charged_embeddings,'{}/{}_emb_color.png'.format(model_name, epoch_num), 
                             neutral_truth, charged_truth,"neutral", "charged", colored=True, colorbar_label=plot_against)

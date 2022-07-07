@@ -19,12 +19,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-model = get_neural_net(model_name)(dropout=0, vtx_classes=vtx_classes).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+net = get_neural_net(model_name)(dropout=0, vtx_classes=vtx_classes).to(device)
+optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
 with open(model_dir + 'hyperparameters.txt', 'w') as f: 
-    f.write("network_architecture: {}\n".format(model))
+    f.write("network_architecture: {}\n".format(net))
 
 
 
@@ -87,21 +87,24 @@ model_performance = []
 
 for epoch in range(NUM_EPOCHS):
     if epoch % 2 == 0:
-        embedding_loss_weight = 0.05
+        embedding_loss_weight = 0.02
     else:
         embedding_loss_weight = 0.0
-    train_loss = train(model, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1)
-    state_dicts = {'model':model.state_dict(),
+    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1)
+    state_dicts = {'model':net.state_dict(),
                     'opt':optimizer.state_dict()} 
 
     torch.save(state_dicts, os.path.join(model_dir, 'epoch-{:02d}.pt'.format(epoch)))
     print("Model saved")
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
-    test_accuracy, test_neutral_accuracy = test(model)
+    test_accuracy, test_neutral_accuracy = test(net)
     print("Epoch: {:02d}, Train Loss: {:4f}, Test Accuracy: {:.2%}, Test Neutral Accuracy: {:.2%}".format(epoch, train_loss, test_accuracy, test_neutral_accuracy))
     model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy})
 # save the model performance as txt
 with open(model_dir + 'model_performance.txt', 'w') as f:
     for item in model_performance:
         f.write("{}\n".format(item))
+
+epoch_to_load = NUM_EPOCHS - 1
+import load_pred_save

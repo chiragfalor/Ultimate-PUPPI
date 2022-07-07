@@ -21,12 +21,6 @@ network_architecture: Net(
     (1): SiLU()
     (2): Linear(in_features=160, out_features=160, bias=True)
   ), k=32)
-  (charged_pfc_encode_2): Sequential(
-    (0): Linear(in_features=161, out_features=160, bias=True)
-  )
-  (neutral_pfc_encode_2): Sequential(
-    (0): Linear(in_features=160, out_features=160, bias=True)
-  )
   (conv2): DynamicEdgeConv(nn=Sequential(
     (0): Linear(in_features=320, out_features=160, bias=True)
     (1): SiLU()
