@@ -245,7 +245,8 @@ def save_class_predictions(net, data_loader, save_name):
                 charge = torch.cat((charge, data.x_pfc[:, -2]), dim=0)
     # cross entropy loss
     total_loss = nn.CrossEntropyLoss()(scores, class_true)
-    print("Total loss: {}".format(total_loss), "with {} vertex classes".format(vtx_classes))
+    accuracy = torch.mean((pred == class_true).float())
+    print("Total loss: {}".format(total_loss), " and accuracy: {:.2%} with {} vertex classes".format(accuracy, vtx_classes))
     data_dict = {'class_true': class_true, 'charge': charge, 'pred': pred, 'vtx_truth': vtx_truth}
     # add the class predictions to the data_dict
     for i in range(class_prob.shape[1]):
@@ -355,16 +356,16 @@ def plot_class_predictions2(df, save_name):
     # on the same figure
     fig, axs = plt.subplots(2, 1, figsize=(10,12))
     # make a red histogram of primary particles and a blue histogram of pileup particles
-    axs[0].hist(1-df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
-    axs[0].hist(1-df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[0].hist(df[df['class_true'] == 2]['class_prob_1'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
+    axs[0].hist(df[df['class_true'] == 1]['class_prob_1'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha=0.5)
     axs[0].set_xlabel('class_pred')
     axs[0].set_ylabel('count')
     axs[0].set_title('class_pred vs class_true for all particles')
     axs[0].legend()
     # for neutral particles
     df = df[df['charge'] == 0]
-    axs[1].hist(1-df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup')
-    axs[1].hist(1-df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary')
+    axs[1].hist(df[df['class_true'] == 2]['class_prob_1'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
+    axs[1].hist(df[df['class_true'] == 1]['class_prob_1'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha = 0.5)
     axs[1].set_xlabel('class_pred')
     axs[1].set_ylabel('count')
     axs[1].set_title('class_pred vs class_true for neutral particles')
@@ -426,3 +427,4 @@ def plot_multiclassification_metrics(df, save_name):
     # roc for neutrals
     df = df[df['charge'] == 0]
     plot_binary_roc_auc_score(df, save_name + '_roc_neutrals')
+    print(metrics.classification_report(df.class_true.values, df.pred.values))

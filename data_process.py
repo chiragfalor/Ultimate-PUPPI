@@ -14,7 +14,7 @@ with open('home_path.txt', 'r') as f:
 # if __name__ == '__main__':
 #     file = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/notr/samples_v0_dijet_48.h5", "r")
 #     file_out = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/raw/samples_v0_dijet_48.h5", "w")
-for fileid in range(1, 47):
+for fileid in range(50, 60):
 #     if fileid == 40:
 #         file = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/notr/samples_v0_dijet_4.h5", "r")
 #         # make a new file to store the processed data
@@ -26,9 +26,9 @@ for fileid in range(1, 47):
 #     else:
     try:
         # file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file = h5py.File(home_dir + 'train3/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file = h5py.File(home_dir + 'test3/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
         # file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
-        file_out = h5py.File(home_dir + 'train/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file_out = h5py.File(home_dir + 'test/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -106,7 +106,7 @@ for fileid in range(1, 47):
         phi = pfs[:,:,2]
         E = pfs[:,:,3]
         q = pfs[:,:,5]
-        z = pfs[:,:,6]
+        z_data = pfs[:,:,6]
         px = pt * np.cos(phi)
         py = pt * np.sin(phi)
         # replace all 0 E, pt with 1
@@ -122,7 +122,7 @@ for fileid in range(1, 47):
         # new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], log_pt[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
         # new features: px, py, eta, log_E, log_pt, q, pid, z
         # new features: px, py, eta, E, pid, q, z
-        new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
+        new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z_data[:,:,np.newaxis]), axis=2)
     # save the processed data in the file
     
     print("new_pfs shape:", new_pfs.shape)

@@ -12,6 +12,10 @@ if __name__ == "__main__":
     # model_name = 'multiclassifier_puppi_no_concat'
     # model_name = 'multiclassifier_puppi_with_concat_z'
 
+    # model_name = 'multiclassifier_2_vtx_embloss'
+    model_name = 'multiclassifier_puppi_2_vtx_weighted'
+    # model_name = 'multiclassifier_puppi_5_vtx_weighted'
+
 
     net = get_neural_net(model_name)(dropout=0, vtx_classes=2)
 

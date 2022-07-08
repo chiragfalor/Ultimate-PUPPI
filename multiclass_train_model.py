@@ -8,7 +8,7 @@ data_train = UPuppiV0(home_dir + 'train/')
 data_test = UPuppiV0(home_dir + 'test/')
 BATCHSIZE = 64
 
-model_name = "multiclassifier_puppi_2_vtx_weighted"
+model_name = "multiclassifier_2_vtx_embloss"
 
 vtx_classes = 2
 
@@ -45,7 +45,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         optimizer.zero_grad()
         scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         # scores = scores.squeeze()
-        vtx_embeddings = None  # uncomment if you want to use contrastive loss
+        # vtx_embeddings = None  # uncomment if you want to use contrastive loss
         loss = loss_fn(data, scores, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, vtx_classes=vtx_classes)
         # if loss is nan, print everything
         if np.isnan(loss.item()):
@@ -81,13 +81,13 @@ def test(model):
     return test_accuracy / counter, test_neutral_accuracy / counter
 
 
-NUM_EPOCHS = 40
+NUM_EPOCHS = 20
 
 model_performance = []
 
 for epoch in range(NUM_EPOCHS):
     if epoch % 2 == 0:
-        embedding_loss_weight = 0.02
+        embedding_loss_weight = 0.01*vtx_classes
     else:
         embedding_loss_weight = 0.0
     train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1)
@@ -107,4 +107,8 @@ with open(model_dir + 'model_performance.txt', 'w') as f:
         f.write("{}\n".format(item))
 
 epoch_to_load = NUM_EPOCHS - 1
-import load_pred_save
+
+save_name = '{}/epoch-{:02d}'.format(model_name, epoch_to_load)
+if not os.path.exists(home_dir+'results/'+model_name): os.makedirs(home_dir+'results/'+model_name)
+df = save_class_predictions(net, test_loader, save_name)
+plot_multiclassification_metrics(df, save_name)
