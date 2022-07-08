@@ -4,13 +4,13 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'train/')
-data_test = UPuppiV0(home_dir + 'test/')
+data_train = UPuppiV0(home_dir + 'train5/')
+data_test = UPuppiV0(home_dir + 'test5/')
 BATCHSIZE = 64
 
-model_name = "multiclassifier_2_vtx_embloss"
-
-vtx_classes = 2
+# model_name = "multiclassifier_2_vtx_without_primary"
+model_name = "multiclassifier_puppi_without_primary"
+vtx_classes = 1
 
 
 print("Training {}...".format(model_name))
@@ -45,7 +45,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         optimizer.zero_grad()
         scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         # scores = scores.squeeze()
-        # vtx_embeddings = None  # uncomment if you want to use contrastive loss
+        vtx_embeddings = None  # uncomment if you want to use contrastive loss
         loss = loss_fn(data, scores, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, vtx_classes=vtx_classes)
         # if loss is nan, print everything
         if np.isnan(loss.item()):

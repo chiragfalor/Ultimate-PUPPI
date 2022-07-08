@@ -2,7 +2,7 @@ from helper_functions import *
 
 BATCHSIZE = 32
 if __name__ == "__main__":
-    epoch_to_load = 39
+    epoch_to_load = 19
     model_name = "DynamicPointTransformer"
     # model_name = 'modelv2_analysis'
     model_name = 'modelv3_first_try'
@@ -15,11 +15,13 @@ if __name__ == "__main__":
     # model_name = 'multiclassifier_2_vtx_embloss'
     model_name = 'multiclassifier_puppi_2_vtx_weighted'
     # model_name = 'multiclassifier_puppi_5_vtx_weighted'
+    model_name = 'multiclassifier_puppi_without_primary'
+    # model_name = 'multiclassifier_2_vtx_without_primary'
 
 
-    net = get_neural_net(model_name)(dropout=0, vtx_classes=2)
+    net = get_neural_net(model_name)(dropout=0, vtx_classes=1)
 
-    data_test = UPuppiV0(home_dir + "test/")
+    data_test = UPuppiV0(home_dir + "test5/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                             follow_batch=['x_pfc', 'x_vtx'])
 
@@ -35,7 +37,7 @@ save_name = '{}/epoch-{:02d}'.format(model_name, epoch_to_load)
 if not os.path.exists(home_dir+'results/'+model_name): os.makedirs(home_dir+'results/'+model_name)
 
 
-
+print(save_name)
 
 # # get df by uncommenting one of the following lines
 # df = save_z_predictions(net, test_loader, save_name)

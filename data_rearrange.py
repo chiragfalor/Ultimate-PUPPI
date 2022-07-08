@@ -12,10 +12,10 @@ with open('home_path.txt', 'r') as f:
 
 pop_top_vtx = True
 
-for fileid in range(50, 60):
+for fileid in range(1, 47):
     try:
-        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file_out = h5py.File(home_dir + 'test4/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/train/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file_out = h5py.File(home_dir + 'train4/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -75,19 +75,24 @@ for fileid in range(50, 60):
 
             # vtx rearranged
             if pop_top_vtx:
-                new_vtx[i] = new_vtx[i][1:]
+                num_pfs = new_pfs.shape[1]
                 # remove particles with truth value 0
                 pileup_idx = np.where(new_truth[i] != 0)
-                new_truth[i] = new_truth[i][pileup_idx]
-                new_pfs[i] = new_pfs[i][pileup_idx]
+                # pad the array with 0s
+                new_truth[i] = np.pad(new_truth[i][pileup_idx], (0, num_pfs - len(pileup_idx[0])), 'constant', constant_values=0)
+                # print(new_pfs[i][pileup_idx].shape, num_pfs)
+                new_pfs[i] = np.concatenate((pfs[i][pileup_idx], np.zeros((num_pfs - len(pileup_idx[0]), new_pfs.shape[2]))), axis=0)
+
                 new_truth[i] = new_truth[i] - 1
                 # replace truth -2 with -1
                 new_truth[i][new_truth[i] == -2] = -1
 
-
+        if pop_top_vtx:
+            new_vtx = new_vtx[:, 1:, :]
 
         file_out.create_dataset("vtx", data=new_vtx)
-        file_out.create_dataset("truth", data=new_truth) 
+        file_out.create_dataset("truth", data=new_truth)
+        file_out.create_dataset("pfs", data=new_pfs)
     print(file_out.keys())
     file_out.close()
     file.close()

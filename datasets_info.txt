@@ -1,0 +1,5 @@
+train and test: normal processed datasets, rearranged vertices
+train2 and test2: original processed datasets, not rearranged vertices
+train3 and test3: unprocessed datasets with rearranged vertices
+train4 and test4: unprocessed datasets with rearranged vertices and primary vertex removed
+train5 and test5: processed datasets with rearranged vertices and primary vertex removed

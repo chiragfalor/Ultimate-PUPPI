@@ -14,7 +14,7 @@ with open('home_path.txt', 'r') as f:
 # if __name__ == '__main__':
 #     file = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/notr/samples_v0_dijet_48.h5", "r")
 #     file_out = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/raw/samples_v0_dijet_48.h5", "w")
-for fileid in range(50, 60):
+for fileid in range(1, 60):
 #     if fileid == 40:
 #         file = h5py.File("/work/submit/cfalor/upuppi/z_reg/train/notr/samples_v0_dijet_4.h5", "r")
 #         # make a new file to store the processed data
@@ -26,9 +26,9 @@ for fileid in range(50, 60):
 #     else:
     try:
         # file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file = h5py.File(home_dir + 'test3/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file = h5py.File(home_dir + 'test4/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
         # file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
-        file_out = h5py.File(home_dir + 'test/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file_out = h5py.File(home_dir + 'test5/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -53,8 +53,8 @@ for fileid in range(50, 60):
 
         # for each event, get the max truth value
         max_truth = truth.max(axis=1)
-        # discard events with max truth < 5
-        nice_event_idx = (max_truth >= 4)
+        # discard events with max truth < 3
+        nice_event_idx = (max_truth >= 3)
         pfs = pfs[nice_event_idx]
         vtx = vtx[nice_event_idx]
         truth = truth[nice_event_idx]

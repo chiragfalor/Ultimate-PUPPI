@@ -4,13 +4,13 @@ from helper_functions import *
 torch.manual_seed(0)
 
 
-data_train = UPuppiV0(home_dir + 'train/')
-data_test = UPuppiV0(home_dir + 'test/')
+data_train = UPuppiV0(home_dir + 'train5/')
+data_test = UPuppiV0(home_dir + 'test5/')
 train_loader = DataLoader(data_train, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 
 data_params = {'event_num':[],'pfcs':[], 'vtxs':[], 'charges':[], 'neutrals':[], 'pileups':[] }
-for counter, data in enumerate(tqdm(test_loader)):
+for counter, data in enumerate(tqdm(train_loader)):
     data_params['event_num'].append(counter)
     data_params['pfcs'].append(data.x_pfc.shape[0])
     data_params['vtxs'].append(data.x_vtx.shape[0])
@@ -25,6 +25,6 @@ print(df.head())
 fig, ax = plt.subplots(1,2, figsize=(10,5))
 ax[0].hist(df['pfcs'], bins=100)
 ax[1].hist(df['vtxs'], bins=100)
-plt.savefig(home_dir + 'results/pfc_vtx_hist.png')
+plt.savefig(home_dir + 'results/pfc_vtx_hist_2.png')
 plt.close()
 

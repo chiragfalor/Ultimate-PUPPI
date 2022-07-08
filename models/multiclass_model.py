@@ -106,7 +106,6 @@ class Net(nn.Module):
 
         x_pfc_init_enc = F.dropout(x_pfc_init_enc, p=self.dropout, training=self.training)
 
-
         # create a representation of PFs to clusters
         x_pfc_euc_enc = self.conv(x_pfc_init_enc, batch_pfc)
         x_pfc_euc_enc = F.dropout(x_pfc_euc_enc, p=self.dropout, training=self.training)

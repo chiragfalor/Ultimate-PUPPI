@@ -356,16 +356,16 @@ def plot_class_predictions2(df, save_name):
     # on the same figure
     fig, axs = plt.subplots(2, 1, figsize=(10,12))
     # make a red histogram of primary particles and a blue histogram of pileup particles
-    axs[0].hist(df[df['class_true'] == 2]['class_prob_1'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
-    axs[0].hist(df[df['class_true'] == 1]['class_prob_1'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha=0.5)
+    axs[0].hist(df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
+    axs[0].hist(df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha=0.5)
     axs[0].set_xlabel('class_pred')
     axs[0].set_ylabel('count')
     axs[0].set_title('class_pred vs class_true for all particles')
     axs[0].legend()
     # for neutral particles
     df = df[df['charge'] == 0]
-    axs[1].hist(df[df['class_true'] == 2]['class_prob_1'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
-    axs[1].hist(df[df['class_true'] == 1]['class_prob_1'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha = 0.5)
+    axs[1].hist(df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
+    axs[1].hist(df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha = 0.5)
     axs[1].set_xlabel('class_pred')
     axs[1].set_ylabel('count')
     axs[1].set_title('class_pred vs class_true for neutral particles')
