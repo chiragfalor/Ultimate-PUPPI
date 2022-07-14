@@ -86,7 +86,7 @@ def test(model, test_loader, loss_fn):
         test_accuracy += accuracy.item()
     fpr, tpr, thresholds = metrics.roc_curve(neutral_truth.cpu().numpy(), 1 - neutral_pred_prob.cpu().numpy()[:, 0])
     roc_auc = metrics.auc(fpr, tpr)
-    return test_loss / counter, test_accuracy / counter, test_neutral_accuracy / counter, auc
+    return test_loss / counter, test_accuracy / counter, test_neutral_accuracy / counter, roc_auc
 
 
 def hyperparameter_search():
