@@ -85,7 +85,6 @@ def contrastive_loss(pfc_embeddings, pfc_batch, true_vtx_id, num_pfc=64, c1=0.1,
     total_contrastive_loss /= batch_size
     return 0.1*total_contrastive_loss
         
-
 def contrastive_loss_event(pfc_enc, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0.01, print_bool=False):
     '''
     Calculate the contrastive loss
@@ -168,7 +167,7 @@ def pileup_classification_loss(score, truth, neutral_mask = None, neutral_ratio 
         loss = (F.binary_cross_entropy_with_logits(charged_scores, charged_truth) + neutral_ratio*F.binary_cross_entropy_with_logits(neutral_scores, neutral_truth))/(1+neutral_ratio)
     return loss
 
-def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 1):
+def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 1, weighting = None, pt = None):
     '''
     Calculate classification loss for multiple vertex prediction
     input:
@@ -179,8 +178,7 @@ def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 
     '''
     vtx_classes = score.shape[1]
     # weight the loss function based on inversely number of particles in each class
-    def get_weights(truth):
-        # get number of classes
+    def get_num_weights(truth):
         try:
             weights = torch.zeros(vtx_classes).to(truth.device)
             for i in range(vtx_classes):
@@ -190,14 +188,24 @@ def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 
         except:
             print("Error in weighting loss function")
             return None
+    def cross_entropy_loss(score, truth, pt=None):
+        if weighting is None:
+            return F.cross_entropy(score, truth)
+        elif weighting == 'num' or pt is None:
+            return F.cross_entropy(score, truth, weight=get_num_weights(truth))
+        elif weighting == 'pt':
+            losses = F.cross_entropy(score, truth, reduction='none')
+            loss = torch.sum(losses*pt)/torch.sum(pt)
+            return loss
+
 
 
     if neutral_mask is None or neutral_ratio == 1:
-        loss = F.cross_entropy(score, truth, weight=get_weights(truth))
+        loss = cross_entropy_loss(score, truth, pt)
     else:
         neutral_scores, neutral_truth = score[neutral_mask], truth[neutral_mask]
         charged_scores, charged_truth = score[~neutral_mask], truth[~neutral_mask]
-        loss = (F.cross_entropy(charged_scores, charged_truth, get_weights(charged_truth)) + neutral_ratio*F.cross_entropy(neutral_scores, neutral_truth, get_weights(neutral_truth)))/(1+neutral_ratio)
+        loss = (cross_entropy_loss(charged_scores, charged_truth, pt[~neutral_mask]) + neutral_ratio*cross_entropy_loss(neutral_scores, neutral_truth, pt[neutral_mask]))/(1+neutral_ratio)
     return loss
 
 def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
@@ -232,7 +240,7 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
     return loss
 
 
-def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, vtx_classes = 1, print_bool=False):
+def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, vtx_classes = 1, classification_weighting = 'pt', print_bool=False):
     '''
     Computes the combined loss including classification loss and embedding loss
     '''
@@ -248,13 +256,18 @@ def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = N
     # calculate the classification loss
     
     neutral_mask = data.x_pfc[:, -2] == 0
+    pt = torch.sqrt(data.x_pfc[:, 0]**2 + data.x_pfc[:, 1]**2).float()
+    # pt = pt[neutral_mask]
     # truth = (data.truth != 0).long()   # process truth here
     truth = data.truth.long()
     # clip the truth to the number of classes
     truth = truth.clamp(max = vtx_classes)
     # replace truth -1 to truth = vtx_classes
     truth[truth == -1] = vtx_classes
-    classification_loss = 100*multiclassification_loss(score, truth, neutral_mask, neutral_weight)
+    classification_loss = 100*multiclassification_loss(score, truth, neutral_mask, neutral_weight, weighting=classification_weighting, pt=pt)
+
+
+
     # classification_loss = 100*pileup_classification_loss(score, truth, neutral_mask, neutral_weight)
     loss = embedding_loss_weight*emb_loss + classification_loss
     if print_bool:

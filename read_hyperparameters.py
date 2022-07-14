@@ -24,12 +24,15 @@ with open(file_loc, 'r') as f:
     list_of_dict = [eval(x) for x in list_as_str]
     # convert to pandas dataframe
     df = pd.DataFrame(list_of_dict)
-    # sort by loss
-    df = df.sort_values(by='loss')
+    # sort by auc descendingly
+    df = df.sort_values(by='test_neutral_accuracy', ascending=False)
     # select optimizer
-    df = df[df['optimizer'] != 'sgd']
     # select epoch 9
-    df = df[df['epoch'] == 9]
+    # df = df[df['epoch'] == 9]
+    # drop columns
+    df = df.drop(columns=['optimizer', 'lr', 'cross_entropy_weighting'])
+    df = df.drop(columns=['test_accuracy', 'test_loss', 'train_loss', 'dropout', 'auc'])
+
     # select where dropout is 0.25
     # df = df[df['dropout'] == 0.0]
     # df = df[df['hidden_dim'] == 100]

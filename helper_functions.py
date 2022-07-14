@@ -52,8 +52,10 @@ def get_neural_net(model_name):
         from models.emb_v2 import Net
     elif model[:6] == "pileup":
         from models.classification_model_puppi import Net
-    elif model[:15] == "multiclassifier":
+    elif model[:10] == "multiclass":
         from models.multiclass_model import Net
+    elif model[:15] == "deep_multiclass":
+        from models.deep_multiclass_model import Net
     else:
         raise(Exception("Model not found"))
     return Net
