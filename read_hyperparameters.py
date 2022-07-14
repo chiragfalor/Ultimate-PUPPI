@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 with open('home_path.txt', 'r') as f:
     home_path = f.readlines()[0].strip()
 
-file_loc = home_path + 'hyperparameter_list.txt'
+file_loc = home_path + 'hyperparameter_list_old_multiclass.txt'
 
 # open file
 with open(file_loc, 'r') as f:
@@ -25,13 +25,15 @@ with open(file_loc, 'r') as f:
     # convert to pandas dataframe
     df = pd.DataFrame(list_of_dict)
     # sort by auc descendingly
-    df = df.sort_values(by='test_neutral_accuracy', ascending=False)
+    df = df.sort_values(by='test_loss', ascending=True)
     # select optimizer
     # select epoch 9
     # df = df[df['epoch'] == 9]
     # drop columns
-    df = df.drop(columns=['optimizer', 'lr', 'cross_entropy_weighting'])
-    df = df.drop(columns=['test_accuracy', 'test_loss', 'train_loss', 'dropout', 'auc'])
+    df = df.drop(columns=['optimizer', 'lr'])
+    df = df.drop(columns=['test_accuracy'])
+    # rename cross_entropy_weighting to cew
+    df = df.rename(columns={'cross_entropy_weighting': 'cew', 'embedding_loss_weight': 'elw', 'neutral_weight': 'nw'})
 
     # select where dropout is 0.25
     # df = df[df['dropout'] == 0.0]

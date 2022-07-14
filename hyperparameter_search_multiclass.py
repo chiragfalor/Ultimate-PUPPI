@@ -5,9 +5,9 @@ import random, time, copy
 from torch import optim
 
 # set random seeds
-random.seed(2)
-np.random.seed(2)
-torch.manual_seed(2)
+random.seed(21)
+np.random.seed(21)
+torch.manual_seed(21)
 
 
 start_time = time.time()
@@ -55,12 +55,10 @@ def train(model, train_loader, optimizer, loss_fn, embedding_loss_weight=0.1, ne
 
 @torch.no_grad()
 def test(model, test_loader, loss_fn):
-    '''
-    Tests the given model on the test set
-    '''
     model.eval()
     test_accuracy, test_neutral_accuracy, test_loss = 0, 0, 0
-    all_pred = None
+    all_pred_prob = None
+    neutral_pred_prob = None
     for counter, data in enumerate(tqdm(test_loader)):
         data = process_data(data)
         data.to(device)
@@ -68,21 +66,26 @@ def test(model, test_loader, loss_fn):
         vtx_classes = score.shape[1] - 1
         loss = loss_fn(data, score, embedding_loss_weight=0, vtx_classes=vtx_classes, classification_weighting = 'pt')
         pred = torch.argmax(score, dim=1).long()
+        pred_prob = torch.softmax(score, dim=1)
         truth = process_truth(data.truth, vtx_classes).long()
-        if all_pred is None:
-            all_pred = pred
-            all_truth = truth
-        else:
-            all_pred = torch.cat((all_pred, pred), dim=0)
-            all_truth = torch.cat((all_truth, truth), dim=0)
-        accuracy = (pred == truth).float().mean()
         neutral_mask = (data.x_pfc[:, -2] == 0)
+        if all_pred_prob is None:
+            all_pred_prob = pred_prob
+            all_truth = truth
+            neutral_pred_prob = pred_prob[neutral_mask]
+            neutral_truth = truth[neutral_mask]
+        else:
+            all_pred_prob = torch.cat((all_pred_prob, pred_prob), dim=0)
+            all_truth = torch.cat((all_truth, truth), dim=0)
+            neutral_pred_prob = torch.cat((neutral_pred_prob, pred_prob[neutral_mask]), dim=0)
+            neutral_truth = torch.cat((neutral_truth, truth[neutral_mask]), dim=0)
+        accuracy = (pred == truth).float().mean()
         accuracy_neutral = (pred[neutral_mask] == truth[neutral_mask]).float().mean()
         test_loss += loss.item()
         test_neutral_accuracy += accuracy_neutral.item()
         test_accuracy += accuracy.item()
-    fpr, tpr, thresholds = metrics.roc_curve(all_truth.cpu().numpy(), all_pred.cpu().numpy())
-    auc = metrics.auc(fpr, tpr)
+    fpr, tpr, thresholds = metrics.roc_curve(neutral_truth.cpu().numpy(), 1 - neutral_pred_prob.cpu().numpy()[:, 0])
+    roc_auc = metrics.auc(fpr, tpr)
     return test_loss / counter, test_accuracy / counter, test_neutral_accuracy / counter, auc
 
 
@@ -92,12 +95,12 @@ def hyperparameter_search():
     neutral_weights = np.logspace(0, 2, 5).astype(int)
     # lrs = np.logspace(-5, -3, 5)
     lrs = np.array([0.001])
-    hidden_dims = np.logspace(1.9, 2.8, 5).astype(int)
+    hidden_dims = np.logspace(1.5, 2.5, 5).astype(int)
     k1s = np.logspace(1, 2, 5).astype(int)
     k2s = np.logspace(0.5, 1.8, 5).astype(int)
     dropouts = np.linspace(0, 0.5, 5)
     cross_entropy_weighting = [None, 'pt', 'num']
-    model_names = ['multiclass_model', 'deep_multiclass_model']
+    model_names = ['multiclass', 'deep_multiclass']
     # optimizers = ['adam', 'adagrad', 'adadelta']    # sgd gives nan loss, rmsprop is relatively bad
     optimizers = ['adam']
     contrastive_loss_fn = [True, False]  # contrastive loss or not
