@@ -116,7 +116,6 @@ def hyperparameter_search():
         hyperparameter_config = {key: random.choice(search_space[key]) for key in search_space}
         print("Hyperparameter config: ", hyperparameter_config)
         upuppi = get_neural_net(hyperparameter_config['model_name'], new_net=True)(pfc_input_dim = 12, hidden_dim=hyperparameter_config['hidden_dim'].item(), k1=hyperparameter_config['k1'].item(), k2=hyperparameter_config['k2'].item(), dropout=hyperparameter_config['dropout'].item()).to(device)
-        print("Training with hyperparameters: ", hyperparameter_config)
         # define the optimizer
         if hyperparameter_config['optimizer'] == 'adam':
             optimizer = optim.Adam(upuppi.parameters(), lr=hyperparameter_config['lr'].item())

@@ -4,17 +4,19 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'train/')
-data_test = UPuppiV0(home_dir + 'test/')
-BATCHSIZE = 16
+data_train = UPuppiV0(home_dir + 'train5/')
+data_test = UPuppiV0(home_dir + 'test5/')
+BATCHSIZE = 64
 
 # model_name = "multiclassifier_2_vtx_without_primary"
 model_name = "multiclassifier_pt_weighted"
 # model_name = "deep_multiclass_test"
 model_name = "deep_multiclass_2vtx_MET"
 model_name = "deep_multiclass_puppi_MET"
+model_name = "deep_transformer_try1"
+model_name = "cheat_model_try1"
 
-vtx_classes = 1
+vtx_classes = 2
 
 
 print("Training {}...".format(model_name))
@@ -23,7 +25,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name, new_net=True)(dropout=0, vtx_classes=vtx_classes, hidden_dim=32, k1=100, k2=63).to(device)
+net = get_neural_net(model_name, new_net=True)(dropout=0, vtx_classes=vtx_classes, hidden_dim=64, k1=100, k2=63).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
@@ -51,7 +53,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         data = process_data(data)
         data.to(device)
         optimizer.zero_grad()
-        scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch, data.truth)
         # scores = scores.squeeze()
         if contrastive:
             vtx_embeddings = None  # uncomment if you want to use contrastive loss
@@ -80,7 +82,7 @@ def test(model, loss_fn):
     for counter, data in enumerate(tqdm(test_loader)):
         data = process_data(data)
         data.to(device)
-        score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+        score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch, data.truth)[0]
         vtx_classes = score.shape[1] - 1
         loss = loss_fn(data, score, embedding_loss_weight=0, vtx_classes=vtx_classes, classification_weighting = 'pt', MET_loss_weight=0)
         pred = torch.argmax(score, dim=1).long()

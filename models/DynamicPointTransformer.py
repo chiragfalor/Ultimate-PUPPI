@@ -47,7 +47,7 @@ class Net(nn.Module):
         x_pfc_enc = F.dropout(x_pfc_enc, p=self.dropout, training=self.training)
         
         pfc_position_encoding = x_pfc_enc
-        edge_index = knn(pfc_position_encoding, pfc_position_encoding, self.k1, batch, batch)
+        edge_index = knn(pfc_position_encoding, pfc_position_encoding, self.k1, batch, batch).flip([0])
         feats1 = self.conv1(x = pfc_position_encoding, pos = pfc_position_encoding, edge_index = edge_index)
         feats1 = F.dropout(feats1, p=self.dropout, training=self.training)
         

@@ -54,8 +54,12 @@ def get_neural_net(model_name, new_net=False):
         from models.classification_model_puppi import Net
     elif model[:10] == "multiclass":
         from models.multiclass_model import Net
+    elif model[:16] == "deep_transformer":
+        from models.deep_multiclass_transformer import Net
     elif model[:15] == "deep_multiclass":
         from models.deep_multiclass_model import Net
+    elif model[:5] == "cheat":
+        from models.cheat_model import Net
     else:
         raise(Exception("Model not found"))
 
