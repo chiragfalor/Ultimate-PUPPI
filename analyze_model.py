@@ -18,7 +18,7 @@ model_name = "modelv2_analysis"
 
 
 
-upuppi = get_neural_net(model_name)(pfc_input_dim=13, hidden_dim=320, k1=32, k2=16, dropout=0)
+upuppi = get_neural_net(model_name)
 # gets the model from models.modelv2
 # print("Model architecture: ", upuppi)
 

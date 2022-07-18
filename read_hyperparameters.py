@@ -28,7 +28,7 @@ with open(file_loc, 'r') as f:
     df = df.sort_values(by='auc', ascending=False)
     # select optimizer
     # select epoch 9
-    # df = df[df['epoch'] == 9]
+    df = df[df['epoch'] == 9]
     # drop columns
     df = df.drop(columns=['optimizer', 'lr'])
     df = df.drop(columns=['test_accuracy'])

@@ -6,18 +6,21 @@ from torch_geometric.data import DataLoader
 torch.manual_seed(8)
 
 if __name__ == '__main__':
-    data_test = UPuppiV0(home_dir+"test5/")
+    data_test = UPuppiV0(home_dir+"test/")
 
     model_name = "vtx_pred_model_puppi"
     model_name = 'multiclassifier_puppi_2_vtx'
     model_name = 'multiclassifier_puppi_without_primary'
+    model_name = 'deep_multiclass_MET'
+    model_name = "deep_multiclass_puppi"
+
 
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model_name)
 
     # model params
     epoch_num = 19
-    net = get_neural_net(model_name)()
+    net = get_neural_net(model_name)
     plot_against = 'z true'
     plot_against = 'vtx id'
 

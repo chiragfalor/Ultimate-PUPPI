@@ -4,14 +4,16 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'train5/')
-data_test = UPuppiV0(home_dir + 'test5/')
-BATCHSIZE = 64
+data_train = UPuppiV0(home_dir + 'train/')
+data_test = UPuppiV0(home_dir + 'test/')
+BATCHSIZE = 16
 
 # model_name = "multiclassifier_2_vtx_without_primary"
 model_name = "multiclassifier_pt_weighted"
 # model_name = "deep_multiclass_test"
-model_name = "deep_multiclass_MET"
+model_name = "deep_multiclass_2vtx_MET"
+model_name = "deep_multiclass_puppi_MET"
+
 vtx_classes = 1
 
 
@@ -21,13 +23,17 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name)(dropout=0, vtx_classes=vtx_classes, hidden_dim=79, k1=31, k2=63).to(device)
+net = get_neural_net(model_name, new_net=True)(dropout=0, vtx_classes=vtx_classes, hidden_dim=32, k1=100, k2=63).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
 with open(model_dir + 'hyperparameters.txt', 'w') as f: 
     f.write("network_architecture: {}\n".format(net))
-
+    f.write("optimizer: {}\n".format(optimizer))
+# save param dict
+with open(model_dir + 'param_dict.pkl', 'wb') as f: 
+    param_dict = net.get_param_dict()
+    pickle.dump(param_dict, f)
 
 
 train_loader = DataLoader(data_train, batch_size=BATCHSIZE, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
@@ -52,8 +58,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         loss = loss_fn(data, scores, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, vtx_classes=vtx_classes, classification_weighting=classification_weighting)
         # if loss is nan, print everything
         if np.isnan(loss.item()):
-            print("Loss is nan")
-            continue
+            raise(Exception("Loss is nan"))
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
@@ -97,6 +102,8 @@ def test(model, loss_fn):
         test_loss += loss.item()
         test_neutral_accuracy += accuracy_neutral.item()
         test_accuracy += accuracy.item()
+    if vtx_classes > 1:
+        neutral_truth = (neutral_truth != 0).long()
     fpr, tpr, thresholds = metrics.roc_curve(neutral_truth.cpu().numpy(), 1 - neutral_pred_prob.cpu().numpy()[:, 0])
     roc_auc = metrics.auc(fpr, tpr)
     # plot ROC curve
@@ -114,16 +121,16 @@ def test(model, loss_fn):
     return test_loss / counter, test_accuracy / counter, test_neutral_accuracy / counter, roc_auc
 
 
-NUM_EPOCHS = 100
+NUM_EPOCHS = 20
 
 model_performance = []
 
 for epoch in range(NUM_EPOCHS):
     if epoch % 2 == 0:
-        embedding_loss_weight = 0.005*vtx_classes
+        embedding_loss_weight = 0.03*vtx_classes
     else:
         embedding_loss_weight = 0.0
-    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=True, classification_weighting='pt')
+    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=True, classification_weighting='num')
     state_dicts = {'model':net.state_dict(),
                     'opt':optimizer.state_dict()} 
 

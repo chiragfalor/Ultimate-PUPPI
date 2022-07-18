@@ -17,9 +17,10 @@ if __name__ == "__main__":
     # model_name = 'multiclassifier_puppi_5_vtx_weighted'
     # model_name = 'multiclassifier_puppi_without_primary'
     # model_name = 'multiclassifier_2_vtx_without_primary'
+    model_name = 'deep_multiclass_puppi'
 
 
-    net = get_neural_net(model_name)(dropout=0.25, vtx_classes=1, hidden_dim=223, k1=17, k2=6)
+    net = get_neural_net(model_name)
 
     data_test = UPuppiV0(home_dir + "test5/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,

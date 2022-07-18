@@ -1,4 +1,4 @@
-import os, torch
+import os, torch, pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,7 +19,7 @@ with open('home_path.txt', 'r') as f:
     home_dir = f.readlines()[0].strip()
 
 
-def get_neural_net(model_name):
+def get_neural_net(model_name, new_net=False):
     '''
     model_name: string
     return: class object of the neural network
@@ -58,7 +58,16 @@ def get_neural_net(model_name):
         from models.deep_multiclass_model import Net
     else:
         raise(Exception("Model not found"))
-    return Net
+
+    if new_net:
+        return Net
+    else:
+        # get the param_dict
+        param_dict_path = os.path.join(home_dir, "models", model_name, "param_dict.pkl")
+        with open(param_dict_path, 'rb') as f:
+            param_dict = pickle.load(f)
+
+        return Net(**param_dict)
 
 
 def process_data(data):

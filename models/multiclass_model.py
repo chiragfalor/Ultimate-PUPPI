@@ -11,6 +11,10 @@ class Net(nn.Module):
         self.pfc_input_dim = pfc_input_dim
         self.dropout = dropout
         self.vtx_classes = vtx_classes
+        self.extra_charged_features = extra_charged_features
+        self.k1 = k1
+        self.k2 = k2
+        self.aggr = aggr
 
         self.vtx_encode_1 = nn.Sequential(
             nn.Linear(5, hidden_dim//4),
@@ -56,6 +60,18 @@ class Net(nn.Module):
             nn.Linear(2*hidden_dim, hidden_dim)
         )
 
+    def get_param_dict(self):
+        return {
+            'hidden_dim': self.hidden_dim,
+            'pfc_input_dim': self.pfc_input_dim,
+            'dropout': self.dropout,
+            'vtx_classes': self.vtx_classes,
+            'extra_charged_features': self.extra_charged_features,
+            'k1': self.k1,
+            'k2': self.k2,
+            'aggr': self.aggr
+        }
+    
     def score_from_encodings(self, pfc_enc, target_vector):
         return torch.sum(pfc_enc*target_vector, dim=1)
 

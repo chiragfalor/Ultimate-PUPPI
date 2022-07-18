@@ -3,7 +3,7 @@ CERN Summer 2022. Project on pileup removal and secondary vertex prediction usin
 
 ## Some helpful tips to figure around
 
-So, running multiclass_train_model.py trains the model and saves it to the model_dir.
+Running multiclass_train_model.py trains the model and saves it to the model_dir.
 
 Then, you can use the model to predict the probability of each class for a given event.
 

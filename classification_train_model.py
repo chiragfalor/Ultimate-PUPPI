@@ -22,7 +22,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-model = get_neural_net(model_name)(dropout=0).to(device)
+model = get_neural_net(model_name, new_net=True)(dropout=0).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
