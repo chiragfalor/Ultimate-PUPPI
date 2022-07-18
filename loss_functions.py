@@ -208,6 +208,30 @@ def multiclassification_loss(score, truth, neutral_mask = None, neutral_ratio = 
         loss = (cross_entropy_loss(charged_scores, charged_truth, pt[~neutral_mask]) + neutral_ratio*cross_entropy_loss(neutral_scores, neutral_truth, pt[neutral_mask]))/(1+neutral_ratio)
     return loss
 
+def MET_loss_fn(x_pfc, x_pfc_batch_mask, scores):
+    '''
+    enforces momentum conservation in the vertices
+    input:
+    x_pfc: (number of particles, number of features), the features of the particles
+    x_pfc_batch: (number of particles, number of features), the features of the particles in the batch
+    scores: (number of particles, number of classes), the score of each particle being in each class
+    '''
+    number_of_particles = x_pfc.shape[0]
+    vtx_classes = scores.shape[1]
+    prob = torch.softmax(scores, dim=1)
+    MET_loss = 0
+    batch_size = x_pfc_batch_mask.max().item()+1
+    for i in range(batch_size):
+        x_pfc_batch = x_pfc[x_pfc_batch_mask == i]
+        prob_batch = prob[x_pfc_batch_mask == i]
+        for j in range(vtx_classes):
+            total_px = torch.sum(x_pfc_batch[:, 0]*prob_batch[:, j])
+            total_py = torch.sum(x_pfc_batch[:, 1]*prob_batch[:, j])
+            MET_loss += total_px**2+total_py**2
+    return 32*MET_loss/number_of_particles
+    
+        
+
 def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, print_bool=False):
     '''
     Computes the combined loss including regression loss and embedding loss
@@ -240,7 +264,7 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
     return loss
 
 
-def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=1, neutral_weight = 1, vtx_classes = 1, classification_weighting = 'pt', print_bool=False):
+def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=0.01, neutral_weight = 1, MET_loss_weight = 0.1, vtx_classes = 1, classification_weighting = 'pt', print_bool=False):
     '''
     Computes the combined loss including classification loss and embedding loss
     '''
@@ -266,11 +290,12 @@ def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = N
     truth[truth == -1] = vtx_classes
     classification_loss = 100*multiclassification_loss(score, truth, neutral_mask, neutral_weight, weighting=classification_weighting, pt=pt)
 
-
+    # calculate the MET loss
+    MET_loss = MET_loss_fn(data.x_pfc, data.x_pfc_batch, score)
 
     # classification_loss = 100*pileup_classification_loss(score, truth, neutral_mask, neutral_weight)
-    loss = embedding_loss_weight*emb_loss + classification_loss
+    loss = embedding_loss_weight*emb_loss + classification_loss + MET_loss_weight*MET_loss
     if print_bool:
-        print("Total loss: {:.2f}, Embedding loss: {:.2f}, Classification loss: {:.2f}".format(loss, embedding_loss_weight*emb_loss, classification_loss))
+        print("Total loss: {:.2f}, Embedding loss: {:.2f}, Classification loss: {:.2f}, MET loss: {:.2f}".format(loss, embedding_loss_weight*emb_loss, classification_loss, MET_loss_weight*MET_loss))
     return loss
 

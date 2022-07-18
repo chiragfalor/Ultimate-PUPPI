@@ -6,12 +6,12 @@ start_time = time.time()
 
 data_train = UPuppiV0(home_dir + 'train5/')
 data_test = UPuppiV0(home_dir + 'test5/')
-BATCHSIZE = 32
+BATCHSIZE = 64
 
 # model_name = "multiclassifier_2_vtx_without_primary"
 model_name = "multiclassifier_pt_weighted"
 # model_name = "deep_multiclass_test"
-model_name = "deep_multiclass_test"
+model_name = "deep_multiclass_MET"
 vtx_classes = 1
 
 
@@ -77,7 +77,7 @@ def test(model, loss_fn):
         data.to(device)
         score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
         vtx_classes = score.shape[1] - 1
-        loss = loss_fn(data, score, embedding_loss_weight=0, vtx_classes=vtx_classes, classification_weighting = 'pt')
+        loss = loss_fn(data, score, embedding_loss_weight=0, vtx_classes=vtx_classes, classification_weighting = 'pt', MET_loss_weight=0)
         pred = torch.argmax(score, dim=1).long()
         pred_prob = torch.softmax(score, dim=1)
         truth = process_truth(data.truth, vtx_classes).long()
@@ -109,12 +109,12 @@ def test(model, loss_fn):
     plt.ylabel('True Positive Rate')
     # add title and save
     plt.title('Neutral AUC score: {:.2f}'.format(roc_auc))
-    plt.savefig(model_dir + '/epoch_{}.png'.format(epoch), bbox_inches='tight')
+    plt.savefig(model_dir + '/epoch_{:02d}.png'.format(epoch), bbox_inches='tight')
     plt.close()
     return test_loss / counter, test_accuracy / counter, test_neutral_accuracy / counter, roc_auc
 
 
-NUM_EPOCHS = 20
+NUM_EPOCHS = 100
 
 model_performance = []
 
@@ -133,7 +133,7 @@ for epoch in range(NUM_EPOCHS):
     print("-----------------------------------------------------")
     test_loss, test_accuracy, test_neutral_accuracy, auc = test(net, combined_classification_embedding_loss_puppi)
     print("Epoch: {:02d}, Train Loss: {:4f}, Test Loss: {:4f} Test Accuracy: {:.2%}, Test Neutral Accuracy: {:.2%}, AUC: {:.2f}".format(epoch, train_loss, test_loss, test_accuracy, test_neutral_accuracy, auc))
-    model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy})
+    model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy, 'test_loss':test_loss, 'auc':auc})
 # save the model performance as txt
 with open(model_dir + 'model_performance.txt', 'w') as f:
     for item in model_performance:

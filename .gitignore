@@ -154,3 +154,7 @@ home_path.txt
 *.out
 *.err
 
+# model checkpoints
+models/*/*.pt
+models/*/*.png
+

@@ -10,7 +10,7 @@ np.random.seed(0)
 torch.manual_seed(40)
 
 # file for debugging tests
-pngs_to_gif(home_dir + 'results/DynamicPointTransformer/', 'DynamicPointTransformer_evolution')
+pngs_to_gif(home_dir + 'models/deep_multiclass_test/', 'evolution')
 
 if __name__ == '__main__' and False:
     # test visualize_embeddings
