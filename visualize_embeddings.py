@@ -13,6 +13,7 @@ if __name__ == '__main__':
     model_name = 'multiclassifier_puppi_without_primary'
     model_name = 'deep_multiclass_MET'
     model_name = "deep_multiclass_puppi"
+    model_name = "cheat_model_try1"
 
 
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
@@ -42,7 +43,7 @@ if __name__ == '__main__':
 
         # pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
         # out, batch, pfc_embeddings = net(data.x_pfc, data.x_pfc_batch)
-        out, pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        out, pfc_embeddings, vtx_embeddings = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch, data.truth)
 
         # separate neutral and charged particles
         neutral_idx, charged_idx = (data.x_pfc[:,-2] == 0), (data.x_pfc[:,-2] != 0)

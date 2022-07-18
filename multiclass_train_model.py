@@ -14,7 +14,7 @@ model_name = "multiclassifier_pt_weighted"
 model_name = "deep_multiclass_2vtx_MET"
 model_name = "deep_multiclass_puppi_MET"
 model_name = "deep_transformer_try1"
-model_name = "cheat_model_try1"
+model_name = "cheat_model_try2"
 
 vtx_classes = 2
 
@@ -25,7 +25,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name, new_net=True)(dropout=0, vtx_classes=vtx_classes, hidden_dim=64, k1=100, k2=63).to(device)
+net = get_neural_net(model_name, new_net=True)(dropout=0, vtx_classes=vtx_classes, hidden_dim=64, k1=30, k2=63).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)

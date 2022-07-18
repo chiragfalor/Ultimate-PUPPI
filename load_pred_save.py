@@ -2,7 +2,7 @@ from helper_functions import *
 
 BATCHSIZE = 32
 if __name__ == "__main__":
-    epoch_to_load = 9
+    epoch_to_load = 19
     model_name = "DynamicPointTransformer"
     # model_name = 'modelv2_analysis'
     model_name = 'modelv3_first_try'
@@ -18,6 +18,7 @@ if __name__ == "__main__":
     # model_name = 'multiclassifier_puppi_without_primary'
     # model_name = 'multiclassifier_2_vtx_without_primary'
     model_name = 'deep_multiclass_puppi'
+    model_name = 'cheat_model_try1'
 
 
     net = get_neural_net(model_name)
@@ -26,12 +27,12 @@ if __name__ == "__main__":
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                             follow_batch=['x_pfc', 'x_vtx'])
 
-    model_dir = home_dir #+ 'models/{}/'.format(model_name)
-    model_loc = model_dir + 'best_model.pt'
-    # model_loc = os.path.join(model_dir, 'epoch-{:02d}.pt'.format(epoch_to_load))
+    model_dir = home_dir + 'models/{}/'.format(model_name)
+    # model_loc = model_dir + 'best_model.pt'
+    model_loc = os.path.join(model_dir, 'epoch-{:02d}.pt'.format(epoch_to_load))
     print("Saving/Plotting predictions of model {}".format(model_name), "at epoch {}".format(epoch_to_load))
 
-    model_state_dict = torch.load(model_loc)#['model']
+    model_state_dict = torch.load(model_loc)['model']
     net.load_state_dict(model_state_dict)
 
 
