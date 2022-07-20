@@ -9,19 +9,24 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=False, num_wor
 pt = torch.tensor([])
 truth = torch.tensor([])
 charge = torch.tensor([])
+E = torch.tensor([])
 for data in tqdm(train_loader):
     pt = torch.cat((pt, data.x_pfc[:, 0]**2 + data.x_pfc[:, 1]**2), 0)
     truth = torch.cat((truth, (data.truth == 0).float()), 0)
     charge = torch.cat((charge, data.x_pfc[:, -2]), 0)
+    E = torch.cat((E, data.x_pfc[:, 3]), 0)
+    
 
-neutral_mask = (charge == 0)
-pt = pt[neutral_mask]
-truth = truth[neutral_mask]
+# neutral_mask = (charge == 0)
+# pt = pt[neutral_mask]
+# truth = truth[neutral_mask]
+# E = E[neutral_mask]
 # convert to numpy
 pt = pt.numpy()
 truth = truth.numpy()
+E = E.numpy()
 # construct a roc curve
-fpr, tpr, _ = metrics.roc_curve(truth, pt)
+fpr, tpr, _ = metrics.roc_curve(truth, E)
 roc_auc = metrics.auc(fpr, tpr)
 print("ROC AUC: ", roc_auc)
 # plot the roc curve
@@ -34,5 +39,5 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 # add title and save
 plt.title('AUC score: {:.2f}'.format(roc_auc))
-plt.savefig('pt_roc_neutral.png', bbox_inches='tight')
+plt.savefig('E_roc.png', bbox_inches='tight')
 plt.close()

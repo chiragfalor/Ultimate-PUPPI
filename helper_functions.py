@@ -36,9 +36,9 @@ def get_neural_net(model_name, new_net=False):
         from models.No_Encode_grav_net import Net
     elif model == "combined_model2" or model == "combined_model":
         from models.model import Net
-    elif model[:7] == "modelv2":   # or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata" or model == "modelv2_analysis" or model == "modelv2_random_z":
+    elif model.startswith == "modelv2":   # or model == "modelv2_neg" or model == "modelv2_nz0" or model == "modelv2_nz199" or model == "modelv2_orig" or model=="modelv2_contrastive" or model=="modelv2_newdata" or model == "modelv2_analysis" or model == "modelv2_random_z":
         from models.modelv2 import Net
-    elif model[:7] == "modelv3":
+    elif model.startswith == "modelv3":
         from models.modelv3 import Net
     elif model == "Dynamic_GATv2":
         from models.Dynamic_GATv2 import Net
@@ -48,17 +48,17 @@ def get_neural_net(model_name, new_net=False):
         from models.DynamicPointTransformer import Net
     elif model == "embedding_GCN" or model == "embedding_GCN_allvtx" or model == "embedding_GCN_nocheating":
         from models.embedding_GCN import Net
-    elif model[:14] == "vtx_pred_model":
+    elif model.startswith == "vtx_pred_model":
         from models.emb_v2 import Net
-    elif model[:6] == "pileup":
+    elif model.startswith == "pileup":
         from models.classification_model_puppi import Net
-    elif model[:10] == "multiclass":
+    elif model.startswith("multiclass"):
         from models.multiclass_model import Net
-    elif model[:16] == "deep_transformer":
+    elif model.startswith("deep_transformer"):
         from models.deep_multiclass_transformer import Net
-    elif model[:15] == "deep_multiclass":
+    elif model.startswith("deep_multiclass"):
         from models.deep_multiclass_model import Net
-    elif model[:5] == "cheat":
+    elif model.startswith("cheat"):
         from models.cheat_model import Net
     else:
         raise(Exception("Model not found"))
@@ -364,23 +364,25 @@ def plot_z_predictions3(df, model_name):
     plt.savefig(home_dir + 'results/{}_zpred_vs_ztrue.png'.format(model_name), bbox_inches='tight')
     plt.close()
 
-def plot_class_predictions2(df, save_name):
+def plot_class_predictions2(df, save_name, pri_cls = 0):
     # make 2 histograms:
     # 1. class prediction vs. class true (for all particles)
     # 2. class prediction vs. class true (for neutral particles)
     # on the same figure
     fig, axs = plt.subplots(2, 1, figsize=(10,12))
+    pil_cls = pri_cls + 1
+
     # make a red histogram of primary particles and a blue histogram of pileup particles
-    axs[0].hist(df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
-    axs[0].hist(df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha=0.5)
+    axs[0].hist(df[df['class_true'] == pil_cls]['class_prob_'+str(pri_cls)], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
+    axs[0].hist(df[df['class_true'] == pri_cls]['class_prob_'+str(pri_cls)], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha=0.5)
     axs[0].set_xlabel('class_pred')
     axs[0].set_ylabel('count')
     axs[0].set_title('class_pred vs class_true for all particles')
     axs[0].legend()
     # for neutral particles
     df = df[df['charge'] == 0]
-    axs[1].hist(df[df['class_true'] == 1]['class_prob_0'], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
-    axs[1].hist(df[df['class_true'] == 0]['class_prob_0'], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha = 0.5)
+    axs[1].hist(df[df['class_true'] == pil_cls]['class_prob_'+str(pri_cls)], bins=np.arange(0,1,0.01), color='blue', label='pileup', density = True, alpha=0.5)
+    axs[1].hist(df[df['class_true'] == pri_cls]['class_prob_'+str(pri_cls)], bins=np.arange(0,1,0.01), color='red', label='primary', density = True, alpha = 0.5)
     axs[1].set_xlabel('class_pred')
     axs[1].set_ylabel('count')
     axs[1].set_title('class_pred vs class_true for neutral particles')
@@ -389,9 +391,10 @@ def plot_class_predictions2(df, save_name):
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
     plt.close()
 
-def plot_binary_roc_auc_score(df, save_name):
-    pred = 1-df.class_prob_0.values
-    true = (df.class_true.values != 0).astype(int)
+def plot_binary_roc_auc_score(df, save_name, pri_cls = 0):
+    df = df[df['class_true'] >= pri_cls]
+    pred = df['class_prob_'+str(pri_cls)].values
+    true = (df.class_true.values == pri_cls).astype(int)
     # metrics.RocCurveDisplay.from_predictions(true, pred).plot()
     fpr, tpr, thresholds = metrics.roc_curve(true, pred)
     roc_auc = metrics.auc(fpr, tpr)
@@ -417,9 +420,11 @@ def plot_confusion_matrix(df, save_name):
     # on the same figure
     fig, axs = plt.subplots(2, 1, figsize=(10,12))
     conf_mat = metrics.confusion_matrix(df.class_true.values, df.pred.values)
+    sn.set(font_scale=2.0)
+    title_font = {'size':'12'}
     # plot the confusion matrix
     sn.heatmap(conf_mat, annot=True, fmt='d', ax=axs[0])
-    axs[0].set_title('confusion matrix for all particles')
+    axs[0].set_title('confusion matrix for all particles', fontdict = title_font)
     # label the axes
     axs[0].set_xlabel('pred')
     axs[0].set_ylabel('true')
@@ -428,18 +433,26 @@ def plot_confusion_matrix(df, save_name):
     conf_mat = metrics.confusion_matrix(df[df['charge'] == 0].class_true.values, df[df['charge'] == 0].pred.values)
     # plot the confusion matrix
     sn.heatmap(conf_mat, annot=True, fmt='d', ax=axs[1])
-    axs[1].set_title('confusion matrix for neutral particles')
+    axs[1].set_title('confusion matrix for neutral particles', fontdict = title_font)
     # label the axes
     axs[1].set_xlabel('pred')
     axs[1].set_ylabel('true')
     plt.savefig(home_dir + 'results/{}.png'.format(save_name), bbox_inches='tight')
+    sn.set(font_scale=1.0)
     plt.close()
 
-def plot_multiclassification_metrics(df, save_name):
+def plot_multiclassification_metrics(df, save_name, primary=False):
+    if primary:
+        pri_cls = 0
+    else:
+            # check the max in class_true
+        max_cls = df.class_true.values.max()
+        pri_cls = max_cls - 1
+
     plot_confusion_matrix(df, save_name+'_confusion_matrix')
-    plot_class_predictions2(df, save_name + '_class_preds')
-    plot_binary_roc_auc_score(df, save_name + '_roc')
+    plot_class_predictions2(df, save_name + '_class_preds', pri_cls=pri_cls)
+    plot_binary_roc_auc_score(df, save_name + '_roc', pri_cls=pri_cls)
     # roc for neutrals
     df = df[df['charge'] == 0]
-    plot_binary_roc_auc_score(df, save_name + '_roc_neutrals')
+    plot_binary_roc_auc_score(df, save_name + '_roc_neutrals', pri_cls=pri_cls)
     print(metrics.classification_report(df.class_true.values, df.pred.values))

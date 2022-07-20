@@ -13,12 +13,13 @@ if __name__ == "__main__":
     # model_name = 'multiclassifier_puppi_with_concat_z'
 
     # model_name = 'multiclassifier_2_vtx_embloss'
-    # model_name = 'multiclassifier_puppi_2_vtx_weighted'
+    model_name = 'multiclassifier_puppi_2_vtx_weighted'
     # model_name = 'multiclassifier_puppi_5_vtx_weighted'
     # model_name = 'multiclassifier_puppi_without_primary'
     # model_name = 'multiclassifier_2_vtx_without_primary'
-    model_name = 'deep_multiclass_puppi'
-    model_name = 'cheat_model_try1'
+    # model_name = 'deep_multiclass_puppi'
+    model_name = 'deep_multiclass_2vtx_MET'
+    model_name = 'cheat_model_try2'
 
 
     net = get_neural_net(model_name)

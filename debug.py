@@ -1,16 +1,26 @@
 from torch_cluster import knn
 import torch
 import numpy as np
-from upuppi_v0_dataset import UPuppiV0
-from torch_geometric.data import DataLoader
 from helper_functions import *
+from dataset_graph_loader import UPuppiV0
+from torch_geometric.data import DataLoader
 
 # random seed
 np.random.seed(0)
 torch.manual_seed(40)
 
 # file for debugging tests
-pngs_to_gif(home_dir + 'models/deep_multiclass_test/', 'evolution')
+# pngs_to_gif(home_dir + 'models/deep_multiclass_test/', 'evolution')
+
+
+data_test = UPuppiV0(home_dir + 'test5/')
+print(data_test)
+print(data_test[2])
+print(data_test[2].edge_index)
+test_loader = DataLoader(data_test, batch_size=32, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
+for i, data in enumerate(test_loader):
+    print(data.edge_index.shape)
+    break
 
 if __name__ == '__main__' and False:
     # test visualize_embeddings

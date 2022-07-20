@@ -25,15 +25,15 @@ with open(file_loc, 'r') as f:
     # convert to pandas dataframe
     df = pd.DataFrame(list_of_dict)
     # sort by auc descendingly
-    df = df.sort_values(by='auc', ascending=False)
+    df = df.sort_values(by='test_loss', ascending=False)
     # select optimizer
     # select epoch 9
-    df = df[df['epoch'] == 9]
+    # df = df[df['epoch'] == 9]
     # drop columns
     df = df.drop(columns=['optimizer', 'lr'])
     df = df.drop(columns=['test_accuracy'])
     # rename cross_entropy_weighting to cew
-    df = df.rename(columns={'cross_entropy_weighting': 'cew', 'embedding_loss_weight': 'elw', 'neutral_weight': 'nw', 'test_neutral_accuracy': 'tn_acc'})
+    df = df.rename(columns={'cross_entropy_weighting': 'cew', 'embedding_loss_weight': 'elw', 'neutral_weight': 'nw', 'test_neutral_accuracy': 'tn_acc', 'contrastive':'ctrstve'})
 
     # select where dropout is 0.25
     # df = df[df['dropout'] == 0.0]
