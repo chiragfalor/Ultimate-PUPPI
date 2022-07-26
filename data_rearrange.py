@@ -12,10 +12,10 @@ with open('home_path.txt', 'r') as f:
 
 pop_top_vtx = True
 
-for fileid in range(1, 47):
+for fileid in range(1, 100):
     try:
-        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/train/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file_out = h5py.File(home_dir + 'train4/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file_out = h5py.File(home_dir + 'test6/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -40,7 +40,7 @@ for fileid in range(1, 47):
         new_truth = np.zeros((truth.shape[0], truth.shape[1]))
         new_truth -= 99
         new_pfs = np.zeros((pfs.shape[0], pfs.shape[1], pfs.shape[2]))
-
+        
         # add an additional feature to vtx, total pt
         # for each event in the file, add the total pt of the particles in the event
         for i in tqdm(range(vtx.shape[0])):

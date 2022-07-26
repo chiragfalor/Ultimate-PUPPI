@@ -9,7 +9,7 @@ data_test = UPuppiV0(home_dir + 'test5/')
 train_loader = DataLoader(data_train, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 
-data_params = {'event_num':[],'pfcs':[], 'vtxs':[], 'charges':[], 'neutrals':[], 'pileups':[] }
+data_params = {'event_num':[],'pfcs':[], 'vtxs':[], 'charges':[], 'neutrals':[], 'pileups':[]}
 for counter, data in enumerate(tqdm(train_loader)):
     data_params['event_num'].append(counter)
     data_params['pfcs'].append(data.x_pfc.shape[0])

@@ -9,11 +9,12 @@ data_test = UPuppiV0(home_dir + 'test/')
 train_loader = DataLoader(data_train, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 
-data_params = {'event_num':[], 'vtx0_px':[], 'vtx1_px':[], 'vtx2_px':[], 'vtx0_py':[], 'vtx1_py':[], 'vtx2_py':[], 'vtx0_count':[], 'vtx1_count':[], 'vtx2_count':[]}
+data_params = {'event_num':[], 'vtx0_px':[], 'vtx1_px':[], 'vtx2_px':[], 'vtx0_py':[], 'vtx1_py':[], 'vtx2_py':[], 'vtx0_count':[], 'vtx1_count':[], 'vtx2_count':[], 'vtx0_pt':[], 'vtx1_pt':[]}
 for counter, data in enumerate(tqdm(train_loader)):
     data_params['event_num'].append(counter)
     px = data.x_pfc[:,0]
     py = data.x_pfc[:,1]
+    pt = (px**2 + py**2)**0.5
     vtx0_id = (data.truth == 0)
     vtx1_id = (data.truth == 1)
     vtx2_id = (data.truth == 2)
@@ -26,6 +27,10 @@ for counter, data in enumerate(tqdm(train_loader)):
     data_params['vtx0_count'].append(vtx0_id.sum().item())
     data_params['vtx1_count'].append(vtx1_id.sum().item())
     data_params['vtx2_count'].append(vtx2_id.sum().item())
+    data_params['vtx0_pt'].append(pt[vtx0_id].sum().item())
+    data_params['vtx1_pt'].append(pt[vtx1_id].sum().item())
+
+
 
 
 
@@ -82,3 +87,18 @@ ax[1].set_title('pfc count for vtx1')
 ax[2].set_title('pfc count for vtx2')
 plt.savefig(home_dir + 'results/vtx_count_hist.png', bbox_inches='tight')
 plt.close()
+
+# plot histogram of total pt for each vtx
+fig, ax = plt.subplots(1,2, figsize=(10,5))
+# plot bincounts for each vtx
+ax[0].hist(df['vtx0_pt'], bins=np.arange(0,200,1))
+ax[1].hist(df['vtx1_pt'], bins=np.arange(0,150,1))
+# label and title
+ax[0].set_title('pt for vtx0')
+ax[1].set_title('pt for vtx1')
+plt.savefig(home_dir + 'results/vtx_pt_hist.png', bbox_inches='tight')
+plt.close()
+
+# df describe for pt
+print(df['vtx0_pt'].describe())
+print(df['vtx1_pt'].describe())

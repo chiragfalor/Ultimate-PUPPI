@@ -264,7 +264,7 @@ def combined_loss_fn(data, z_pred, pfc_embeddings = None, vtx_embeddings = None,
     return loss
 
 
-def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=0.01, neutral_weight = 1, MET_loss_weight = 0.1, vtx_classes = 1, classification_weighting = 'pt', print_bool=False):
+def combined_classification_embedding_loss_puppi(data, score, pfc_embeddings = None, vtx_embeddings = None, embedding_loss_weight=0.01, neutral_weight = 1, MET_loss_weight = 0, vtx_classes = 1, classification_weighting = 'pt', print_bool=False):
     '''
     Computes the combined loss including classification loss and embedding loss
     '''

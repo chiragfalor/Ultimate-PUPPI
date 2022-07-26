@@ -140,6 +140,10 @@ train4/
 test4/
 train5/
 test5/
+train6/
+test6/
+train7/
+test7/
 
 # predictions
 *.csv

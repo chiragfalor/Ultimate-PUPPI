@@ -1,6 +1,65 @@
 from helper_functions import *
 from loss_functions import *
 
+import h5py
+
+def choose_nice_events(net, data_loader, loss_cut = 0.88):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cpu = torch.device("cpu")
+    net.to(device)
+    net.eval()
+    
+    pfs = torch.empty((0, 1000, 12))
+    vtxs = torch.empty((0, 200, 5))
+    truth = torch.empty((0, 1000))
+    z = torch.empty((0, 1000))
+
+    counter = 0
+    with torch.no_grad():
+        for data in tqdm(data_loader):
+            data = process_data(data)
+            data = data.to(device)
+            scores, _, _ = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+            vtx_classes = scores.shape[1] - 1
+            class_true_batch = process_truth(data.truth, vtx_classes).long()
+            neutral_mask = (data.x_pfc[:, -2]==0)
+            loss = multiclassification_loss(scores[neutral_mask], class_true_batch[neutral_mask], weighting='num')
+            if loss > loss_cut:
+                continue
+            else:
+                data = data.to(cpu)
+                counter += 1
+                pfs_event = torch.cat((data.x_pfc, torch.zeros((1000 - data.x_pfc.shape[0], data.x_pfc.shape[1]))), dim=0).unsqueeze(0)
+                vtx_event = torch.cat((data.x_vtx, torch.zeros((200 - data.x_vtx.shape[0], data.x_vtx.shape[1]))), dim=0).unsqueeze(0)
+                truth_event = torch.cat((data.truth, torch.zeros((1000 - data.truth.shape[0],))), dim=0).unsqueeze(0)
+                z_event = torch.cat((data.y, torch.zeros((1000 - data.y.shape[0],))), dim=0).unsqueeze(0)
+                pfs = torch.cat((pfs, pfs_event), dim=0)
+                vtxs = torch.cat((vtxs, vtx_event), dim=0)
+                truth = torch.cat((truth, truth_event), dim=0)
+                z = torch.cat((z, z_event), dim=0)
+                if counter % 1000 == 0 and counter != 0:
+                    print("Saving data")
+                    save_path = home_dir+ 'train6/raw/samples_v0_dijet_'+str(50 + counter//1000)+".h5"
+                    file_out = h5py.File(save_path , "w")
+                    file_out.create_dataset("pfs", data=pfs.numpy())
+                    file_out.create_dataset("vtx", data=vtxs.numpy())
+                    file_out.create_dataset("truth", data=truth.numpy())
+                    file_out.create_dataset("z", data=z.numpy())
+                    file_out.create_dataset("n", data=pfs.shape[0], dtype='i8')
+                    file_out.close()
+                    print("Saved data to {}".format(save_path))
+                    print("Processed {} events".format(counter))
+                    pfs = torch.empty((0, 1000, 12))
+                    vtxs = torch.empty((0, 200, 5))
+                    truth = torch.empty((0, 1000))
+                    z = torch.empty((0, 1000))
+            
+
+
+
+
+
+
 def save_class_predictions(net, data_loader, save_name, pt_cut=650, E_cut=750, loss_cut = 0.5):
     '''
     Saves the data and predictions of the network for all the data in the data_loader
@@ -102,13 +161,15 @@ def save_event_predictions(net, test_loader, save_name):
 
 if __name__ == "__main__":
     save = True
+    process = False
     epoch_to_load = 99
     model_name = 'deep_multiclass_test'
+    # model_name = 'deep_multiclass_enhanced_data_try2'
 
     if save:
         net = get_neural_net(model_name)
 
-        data_test = UPuppiV0(home_dir + "test5/")
+        data_test = UPuppiV0(home_dir + "test6/")
         test_loader = DataLoader(data_test, batch_size=1, shuffle=True,
                                     follow_batch=['x_pfc', 'x_vtx'])
 
@@ -123,6 +184,7 @@ if __name__ == "__main__":
 
     save_name = '{}/event_analysis_high_pt_epoch-{:02d}'.format(model_name, epoch_to_load)
     if not os.path.exists(home_dir+'results/'+model_name): os.makedirs(home_dir+'results/'+model_name)
+    if process: choose_nice_events(net, test_loader, loss_cut=0.89)
     if save: df = save_class_predictions(net, test_loader, save_name, pt_cut = 0, E_cut = 0, loss_cut = 0.7)
     else: df = pd.read_csv(home_dir+'results/'+save_name+'.csv')
     print(df.head())
@@ -131,6 +193,7 @@ if __name__ == "__main__":
     print(df.corr())
     # print correlation between loss and auc in neutral particles
     # print(df.corr()['auc']['loss_neutral'])
+    
     
     plot_multiclassification_metrics(df, save_name)
 
