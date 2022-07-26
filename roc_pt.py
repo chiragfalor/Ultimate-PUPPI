@@ -10,11 +10,13 @@ pt = torch.tensor([])
 truth = torch.tensor([])
 charge = torch.tensor([])
 E = torch.tensor([])
+eta = torch.tensor([])
 for data in tqdm(train_loader):
-    pt = torch.cat((pt, data.x_pfc[:, 0]**2 + data.x_pfc[:, 1]**2), 0)
+    pt = torch.cat((pt, (data.x_pfc[:, 0]**2 + data.x_pfc[:, 1]**2)**0.5), 0)
     truth = torch.cat((truth, (data.truth == 0).float()), 0)
     charge = torch.cat((charge, data.x_pfc[:, -2]), 0)
     E = torch.cat((E, data.x_pfc[:, 3]), 0)
+    eta = torch.cat((eta, data.x_pfc[:, 2]), 0)
     
 
 # neutral_mask = (charge == 0)

@@ -4,8 +4,8 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'train6/')
-data_test = UPuppiV0(home_dir + 'test6/')
+data_train = UPuppiV0(home_dir + 'train5/')
+data_test = UPuppiV0(home_dir + 'test5/')
 BATCHSIZE = 64
 
 # model_name = "multiclassifier_2_vtx_without_primary"
@@ -18,6 +18,9 @@ model_name = "cheat_model_try2"
 model_name = "deep_multiclass_enhanced_data"
 model_name = "deep_multiclass_enhanced_data_try2"
 model_name = "multi_deep_try1"
+model_name = "deep_multiclass_MET_weight_5"
+model_name = "deep_multiclass_neg_emb_weight"
+model_name = "deep_high_eta_enc_try1"
 
 vtx_classes = 1
 
@@ -46,7 +49,7 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True, follow_b
 
 
 
-def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight = 1, contrastive = True, classification_weighting = 'pt'):
+def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight = 1, contrastive = True, classification_weighting = 'pt', MET_loss_weight = 0.01):
     '''
     Trains the given model for one epoch
     '''
@@ -60,7 +63,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         # scores = scores.squeeze()
         if contrastive:
             vtx_embeddings = None  # uncomment if you want to use contrastive loss
-        loss = loss_fn(data, scores, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, vtx_classes=vtx_classes, classification_weighting=classification_weighting)
+        loss = loss_fn(data, scores, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, vtx_classes=vtx_classes, classification_weighting=classification_weighting, MET_loss_weight=MET_loss_weight)
         # if loss is nan, print everything
         if np.isnan(loss.item()):
             raise(Exception("Loss is nan"))
@@ -135,7 +138,7 @@ for epoch in range(NUM_EPOCHS):
         embedding_loss_weight = 0.03*vtx_classes
     else:
         embedding_loss_weight = 0.0
-    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=True, classification_weighting='num')
+    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=True, classification_weighting='num', MET_loss_weight=0)
     state_dicts = {'model':net.state_dict(),
                     'opt':optimizer.state_dict()} 
 

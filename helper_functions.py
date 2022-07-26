@@ -62,6 +62,8 @@ def get_neural_net(model_name, new_net=False):
         from models.cheat_model import Net
     elif model.startswith("multi_deep"):
         from models.multilayer_deep_multiclass_model import Net
+    elif model.startswith('deep_high_eta_enc'):
+        from models.deep_multiclass_3_enc import Net
     else:
         raise(Exception("Model not found"))
 
