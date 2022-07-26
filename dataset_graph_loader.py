@@ -90,8 +90,7 @@ class UPuppiV0(Dataset):
             edges = np.zeros((2, 0), dtype=np.int64)
             for i in range(Npfc):
                 for j in range(i+1, Npfc):
-                    if truth[i] == truth[j]:
-                        edges = np.concatenate((edges, np.array([[i], [j]])), axis=1)
+                    edges = np.concatenate((edges, np.array([[i], [j]])), axis=1)
             edges = torch.from_numpy(edges).long()
             # make it undirected
             edges = to_undirected(edges)

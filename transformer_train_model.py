@@ -1,6 +1,7 @@
 import time
 from helper_functions import *
 from loss_functions import *
+from dataset_graph_loader import UPuppiV0
 
 start_time = time.time()
 
@@ -8,20 +9,8 @@ data_train = UPuppiV0(home_dir + 'train9/')
 data_test = UPuppiV0(home_dir + 'test9/')
 BATCHSIZE = 64
 
-# model_name = "multiclassifier_2_vtx_without_primary"
-model_name = "multiclassifier_pt_weighted"
-# model_name = "deep_multiclass_test"
-model_name = "deep_multiclass_2vtx_MET"
-model_name = "deep_multiclass_puppi_MET"
-model_name = "deep_transformer_try1"
-model_name = "cheat_model_try2"
-model_name = "deep_multiclass_enhanced_data"
-model_name = "deep_multiclass_enhanced_data_try2"
-model_name = "multi_deep_try1"
-model_name = "deep_multiclass_MET_weight_5"
-model_name = "deep_multiclass_neg_emb_weight"
-model_name = "deep_high_eta_enc_try1"
-model_name = "multi_deep_more_features_try1"
+model_name = 'new_transformer_try1'
+model_name = 'simple_transformer_try1'
 
 vtx_classes = 1
 
@@ -32,7 +21,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 15, dropout=0, vtx_classes=vtx_classes, hidden_dim=79, k1=31, k2=63).to(device)
+net = get_neural_net(model_name, new_net=True)(dropout=0, vtx_classes=vtx_classes).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
@@ -50,21 +39,22 @@ test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True, follow_b
 
 
 
-def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight = 1, contrastive = True, classification_weighting = 'pt', MET_loss_weight = 0.01):
+def train(model, optimizer, loss_fn, neutral_weight = 1, classification_weighting = 'pt'):
     '''
     Trains the given model for one epoch
     '''
+    global vtx_classes
     model.train()
     train_loss = 0
     for counter, data in enumerate(tqdm(train_loader)):
         data = process_data(data)
         data.to(device)
         optimizer.zero_grad()
-        scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-        # scores = scores.squeeze()
-        if contrastive:
-            vtx_embeddings = None  # uncomment if you want to use contrastive loss
-        loss = loss_fn(data, scores, pfc_embeddings, vtx_embeddings, embedding_loss_weight, neutral_weight, vtx_classes=vtx_classes, classification_weighting=classification_weighting, MET_loss_weight=MET_loss_weight)
+        neutral_mask = data.x_pfc[:, -2] == 0
+        pt = torch.sqrt(data.x_pfc[:, 0]**2 + data.x_pfc[:, 1]**2).float()
+        scores = model(data.x_pfc, data.edge_index)
+        truth = process_truth(data.truth, vtx_classes).long()
+        loss = loss_fn(scores, truth, neutral_mask, neutral_weight, weighting=classification_weighting, pt=pt)
         # if loss is nan, print everything
         if np.isnan(loss.item()):
             raise(Exception("Loss is nan"))
@@ -73,7 +63,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         train_loss += loss.item()
         if counter % 100 == 1:
             print("Train loss: ", train_loss / counter)
-            loss_fn(data, scores, pfc_embeddings, vtx_embeddings=vtx_embeddings, embedding_loss_weight=embedding_loss_weight, neutral_weight=neutral_weight, print_bool = True)
+            print("Current loss: ", loss.item())
     return train_loss / counter
 
 @torch.no_grad()
@@ -81,7 +71,7 @@ def test(model, loss_fn):
     '''
     Tests the given model on the test set
     '''
-    global epoch
+    global epoch, vtx_classes
     model.eval()
     test_accuracy, test_neutral_accuracy, test_loss = 0, 0, 0
     all_pred_prob = None
@@ -89,9 +79,9 @@ def test(model, loss_fn):
     for counter, data in enumerate(tqdm(test_loader)):
         data = process_data(data)
         data.to(device)
-        score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+        score = model(data.x_pfc, data.edge_index)
         vtx_classes = score.shape[1] - 1
-        loss = loss_fn(data, score, embedding_loss_weight=0, vtx_classes=vtx_classes, classification_weighting = 'pt', MET_loss_weight=0)
+        loss = loss_fn(score, process_truth(data.truth, vtx_classes).long())
         pred = torch.argmax(score, dim=1).long()
         pred_prob = torch.softmax(score, dim=1)
         truth = process_truth(data.truth, vtx_classes).long()
@@ -135,11 +125,7 @@ NUM_EPOCHS = 20
 model_performance = []
 
 for epoch in range(NUM_EPOCHS):
-    if epoch % 2 == 0:
-        embedding_loss_weight = 0.03*vtx_classes
-    else:
-        embedding_loss_weight = 0.0
-    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=True, classification_weighting='num', MET_loss_weight=0)
+    train_loss = train(net, optimizer, loss_fn=multiclassification_loss, neutral_weight=epoch+1, classification_weighting='pt')
     state_dicts = {'model':net.state_dict(),
                     'opt':optimizer.state_dict()} 
 
@@ -147,7 +133,7 @@ for epoch in range(NUM_EPOCHS):
     print("Model saved")
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
-    test_loss, test_accuracy, test_neutral_accuracy, auc = test(net, combined_classification_embedding_loss_puppi)
+    test_loss, test_accuracy, test_neutral_accuracy, auc = test(net, multiclassification_loss)
     print("Epoch: {:02d}, Train Loss: {:4f}, Test Loss: {:4f} Test Accuracy: {:.2%}, Test Neutral Accuracy: {:.2%}, AUC: {:.2f}".format(epoch, train_loss, test_loss, test_accuracy, test_neutral_accuracy, auc))
     model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy, 'test_loss':test_loss, 'auc':auc})
 # save the model performance as txt

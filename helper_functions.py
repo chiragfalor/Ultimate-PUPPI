@@ -64,6 +64,10 @@ def get_neural_net(model_name, new_net=False):
         from models.multilayer_deep_multiclass_model import Net
     elif model.startswith('deep_high_eta_enc'):
         from models.deep_multiclass_3_enc import Net
+    elif model.startswith('new_transformer'):
+        from models.Point_transformer_connect_all import Net
+    elif model.startswith('simple_transformer'):
+        from models.simple_point_transformer import Net
     else:
         raise(Exception("Model not found"))
 

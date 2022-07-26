@@ -26,9 +26,9 @@ for fileid in range(1, 100):
 #     else:
     try:
         # file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file = h5py.File(home_dir + 'train6/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file = h5py.File(home_dir + 'test4/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
         # file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
-        file_out = h5py.File(home_dir + 'train7/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file_out = h5py.File(home_dir + 'test9/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -53,8 +53,8 @@ for fileid in range(1, 100):
 
         # for each event, get the max truth value
         max_truth = truth.max(axis=1)
-        # discard events with max truth < 3
-        nice_event_idx = (max_truth >= 3)
+        # discard events with max truth < 2
+        nice_event_idx = (max_truth >= 2)
         pfs = pfs[nice_event_idx]
         vtx = vtx[nice_event_idx]
         truth = truth[nice_event_idx]
@@ -122,7 +122,9 @@ for fileid in range(1, 100):
         # new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], log_pt[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z[:,:,np.newaxis]), axis=2)
         # new features: px, py, eta, log_E, log_pt, q, pid, z
         # new features: px, py, eta, E, pid, q, z
-        new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z_data[:,:,np.newaxis]), axis=2)
+        # new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], log_E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z_data[:,:,np.newaxis]), axis=2)
+        # new features: px, py, eta, phi, pt, E, log_E, pid, q, z
+        new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], phi[:,:,np.newaxis], pt[:,:,np.newaxis], E[:,:,np.newaxis], log_E[:,:,np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z_data[:,:,np.newaxis]), axis=2)
     # save the processed data in the file
     
     print("new_pfs shape:", new_pfs.shape)

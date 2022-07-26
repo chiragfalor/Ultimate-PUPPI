@@ -144,6 +144,11 @@ train6/
 test6/
 train7/
 test7/
+train8/
+test8/
+train9/
+test9/
+
 
 # predictions
 *.csv
