@@ -4,8 +4,8 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'train9/')
-data_test = UPuppiV0(home_dir + 'test9/')
+data_train = UPuppiV0(home_dir + 'all_data3/')
+data_test = UPuppiV0(home_dir + 'all_data3/')
 BATCHSIZE = 64
 
 # model_name = "multiclassifier_2_vtx_without_primary"
@@ -22,6 +22,7 @@ model_name = "deep_multiclass_MET_weight_5"
 model_name = "deep_multiclass_neg_emb_weight"
 model_name = "deep_high_eta_enc_try1"
 model_name = "multi_deep_more_features_try1"
+model_name = 'multi_deep_curated_data'
 
 vtx_classes = 1
 

@@ -12,10 +12,10 @@ with open('home_path.txt', 'r') as f:
 
 pop_top_vtx = True
 
-for fileid in range(1, 100):
+for fileid in range(1, 101):
     try:
-        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
-        file_out = h5py.File(home_dir + 'test6/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/samples_v0_dijet_'+str(fileid)+".h5", "r")
+        file_out = h5py.File(home_dir + 'all_data/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)

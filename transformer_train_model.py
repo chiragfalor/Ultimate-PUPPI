@@ -11,6 +11,7 @@ BATCHSIZE = 64
 
 model_name = 'new_transformer_try1'
 model_name = 'simple_transformer_try1'
+model_name = 'new_transformer_less_edges'
 
 vtx_classes = 1
 

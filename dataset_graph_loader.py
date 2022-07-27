@@ -1,5 +1,6 @@
 import os.path as osp
 import glob
+from time import sleep
 
 import h5py
 import numpy as np
@@ -88,13 +89,26 @@ class UPuppiV0(Dataset):
             truth = torch.from_numpy(f['truth'][idx_in_file,:Npfc][pfSelection]).int()
             # connect edges between all same truth
             edges = np.zeros((2, 0), dtype=np.int64)
-            for i in range(Npfc):
-                for j in range(i+1, Npfc):
-                    edges = np.concatenate((edges, np.array([[i], [j]])), axis=1)
+            # for i in range(Npfc):
+            #     for j in range(i+1, Npfc):
+            #         edges = np.concatenate((edges, np.array([[i], [j]])), axis=1)
+            # choose edges randomly
+            # if Npfc*(Npfc-1)//2 < 11000:
+            if True:
+                for i in range(Npfc):
+                    for j in range(i+1, Npfc):
+                        edges = np.concatenate((edges, np.array([[i], [j]])), axis=1)
+            else:
+                edges1 = np.random.choice(Npfc, size=(1, int(10000)))
+                edges2 = np.random.choice(Npfc, size=(1, int(10000)))
+                edges = np.concatenate((edges1, edges2), axis=0)
+                edges = np.unique(edges, axis=1)
+                edges = edges[:,edges[0] != edges[1]]
             edges = torch.from_numpy(edges).long()
             # make it undirected
             edges = to_undirected(edges)
-
+            # remove self-loops
+            # remove duplicate edges
 
             # gen info
             #gen = f['geninfo']

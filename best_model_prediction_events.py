@@ -3,6 +3,41 @@ from loss_functions import *
 
 import h5py
 
+def concat_data(data_loader):
+    pfs = torch.empty((0, 1000, 15))
+    vtxs = torch.empty((0, 200, 5))
+    truth = torch.empty((0, 1000))
+    z = torch.empty((0, 1000))
+    counter = 0
+    for data in tqdm(data_loader):
+        counter += 1
+        data = process_data(data)
+        pfs_event = torch.cat((data.x_pfc, torch.zeros((1000 - data.x_pfc.shape[0], data.x_pfc.shape[1]))), dim=0).unsqueeze(0)
+        vtx_event = torch.cat((data.x_vtx, torch.zeros((200 - data.x_vtx.shape[0], data.x_vtx.shape[1]))), dim=0).unsqueeze(0)
+        truth_event = torch.cat((data.truth, torch.zeros((1000 - data.truth.shape[0],))), dim=0).unsqueeze(0)
+        z_event = torch.cat((data.y, torch.zeros((1000 - data.y.shape[0],))), dim=0).unsqueeze(0)
+        pfs = torch.cat((pfs, pfs_event), dim=0)
+        vtxs = torch.cat((vtxs, vtx_event), dim=0)
+        truth = torch.cat((truth, truth_event), dim=0)
+        z = torch.cat((z, z_event), dim=0)
+        if counter % 1000 == 0 or counter == len(data_loader):
+            print("Saving data")
+            save_path = home_dir+ 'all_data3/raw/samples_v0_dijet_'+str(50 + counter//1000)+".h5"
+            file_out = h5py.File(save_path , "w")
+            file_out.create_dataset("pfs", data=pfs.numpy())
+            file_out.create_dataset("vtx", data=vtxs.numpy())
+            file_out.create_dataset("truth", data=truth.numpy())
+            file_out.create_dataset("z", data=z.numpy())
+            file_out.create_dataset("n", data=pfs.shape[0], dtype='i8')
+            file_out.close()
+            print("Saved data to {}".format(save_path))
+            print("Processed {} events".format(counter))
+            pfs = torch.empty((0, 1000, 15))
+            vtxs = torch.empty((0, 200, 5))
+            truth = torch.empty((0, 1000))
+            z = torch.empty((0, 1000))
+
+
 def choose_nice_events(net, data_loader, loss_cut = 0.88):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     cpu = torch.device("cpu")
@@ -157,9 +192,14 @@ def save_event_predictions(net, test_loader, save_name):
     print("Saved data to results/{}.csv".format(save_name))
     return df
 
+if __name__ == '__main__':
+    all_data = UPuppiV0(home_dir+'all_data2/')
+    data_loader = DataLoader(all_data, batch_size=1, shuffle=False)
+    concat_data(data_loader)
 
 
-if __name__ == "__main__":
+
+if __name__ == "__main__" and False:
     save = True
     process = False
     epoch_to_load = 99
