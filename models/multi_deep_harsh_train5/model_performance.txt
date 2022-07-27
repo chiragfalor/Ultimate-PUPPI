@@ -1,0 +1,11 @@
+{'epoch': 0, 'train_loss': 64.60863744467497, 'test_accuracy': 0.7083267516199253, 'test_neutral_accuracy': 0.7684696504578052, 'test_loss': 65.02672885642441, 'auc': 0.5993865056878183}
+{'epoch': 1, 'train_loss': 67.64342847466469, 'test_accuracy': 0.6053892379836814, 'test_neutral_accuracy': 0.5794185771088656, 'test_loss': 67.20895258090839, 'auc': 0.6072793304673264}
+{'epoch': 2, 'train_loss': 63.213770501315594, 'test_accuracy': 0.4166868759268453, 'test_neutral_accuracy': 0.4144972865451635, 'test_loss': 79.07408723942501, 'auc': 0.6123252955163657}
+{'epoch': 3, 'train_loss': 67.38423562049866, 'test_accuracy': 0.5158897369288284, 'test_neutral_accuracy': 0.5162710157813729, 'test_loss': 71.71431441251406, 'auc': 0.6215746008084804}
+{'epoch': 4, 'train_loss': 62.30363506823778, 'test_accuracy': 0.6006264593814598, 'test_neutral_accuracy': 0.5893866452261631, 'test_loss': 68.3942183854515, 'auc': 0.6148365930546698}
+{'epoch': 5, 'train_loss': 67.34353393316269, 'test_accuracy': 0.5742764942608919, 'test_neutral_accuracy': 0.5714114703788832, 'test_loss': 69.17291394838563, 'auc': 0.620166840823321}
+{'epoch': 6, 'train_loss': 62.03971832245588, 'test_accuracy': 0.6487016680175692, 'test_neutral_accuracy': 0.6491921444347396, 'test_loss': 65.53553305896804, 'auc': 0.6209486239812939}
+{'epoch': 7, 'train_loss': 67.29723350703716, 'test_accuracy': 0.5211591722900302, 'test_neutral_accuracy': 0.5278617050861106, 'test_loss': 71.90149756999331, 'auc': 0.6229125312036963}
+{'epoch': 8, 'train_loss': 62.04734814912081, 'test_accuracy': 0.47512062421568635, 'test_neutral_accuracy': 0.47382336228738037, 'test_loss': 71.97832530574576, 'auc': 0.6157071966355037}
+{'epoch': 9, 'train_loss': 67.23530474305153, 'test_accuracy': 0.6272481628892951, 'test_neutral_accuracy': 0.6347254818515555, 'test_loss': 66.61562816456598, 'auc': 0.6218166256040648}
+{'epoch': 10, 'train_loss': 62.046862334012985, 'test_accuracy': 0.6141353248390242, 'test_neutral_accuracy': 0.6184255356686589, 'test_loss': 67.51092851393881, 'auc': 0.6199295730724648}

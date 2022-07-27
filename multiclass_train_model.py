@@ -4,8 +4,8 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'all_data3/')
-data_test = UPuppiV0(home_dir + 'all_data3/')
+data_train = UPuppiV0(home_dir + 'all_data5/')
+data_test = UPuppiV0(home_dir + 'all_data5/')
 BATCHSIZE = 64
 
 # model_name = "multiclassifier_2_vtx_without_primary"
@@ -23,6 +23,11 @@ model_name = "deep_multiclass_neg_emb_weight"
 model_name = "deep_high_eta_enc_try1"
 model_name = "multi_deep_more_features_try1"
 model_name = 'multi_deep_curated_data'
+model_name = 'multi_deep_more_curated_data'
+
+model_name = 'multi_deep_all_data4'
+# model_name = 'multi_deep_harsh_train5'
+model_name = 'multi_deep_all_data5'
 
 vtx_classes = 1
 
@@ -33,7 +38,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 15, dropout=0, vtx_classes=vtx_classes, hidden_dim=79, k1=31, k2=63).to(device)
+net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 15, dropout=0, vtx_classes=vtx_classes, hidden_dim=160, k1=63, k2=31).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
@@ -131,7 +136,7 @@ def test(model, loss_fn):
     return test_loss / counter, test_accuracy / counter, test_neutral_accuracy / counter, roc_auc
 
 
-NUM_EPOCHS = 20
+NUM_EPOCHS = 100
 
 model_performance = []
 
@@ -152,9 +157,9 @@ for epoch in range(NUM_EPOCHS):
     print("Epoch: {:02d}, Train Loss: {:4f}, Test Loss: {:4f} Test Accuracy: {:.2%}, Test Neutral Accuracy: {:.2%}, AUC: {:.2f}".format(epoch, train_loss, test_loss, test_accuracy, test_neutral_accuracy, auc))
     model_performance.append({'epoch':epoch, 'train_loss':train_loss, 'test_accuracy':test_accuracy, 'test_neutral_accuracy':test_neutral_accuracy, 'test_loss':test_loss, 'auc':auc})
 # save the model performance as txt
-with open(model_dir + 'model_performance.txt', 'w') as f:
-    for item in model_performance:
-        f.write("{}\n".format(item))
+    with open(model_dir + 'model_performance.txt', 'w') as f:
+        for item in model_performance:
+            f.write("{}\n".format(item))
 
 epoch_to_load = NUM_EPOCHS - 1
 

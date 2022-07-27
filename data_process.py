@@ -28,7 +28,7 @@ for fileid in range(1, 100):
         # file = h5py.File('/work/submit/bmaier/upuppi/data/v0_z_regression_pu30/test/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
         file = h5py.File(home_dir + 'all_data/raw/samples_v0_dijet_'+str(fileid)+".h5", "r")
         # file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
-        file_out = h5py.File(home_dir + 'all_data2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
+        file_out = h5py.File(home_dir + 'all_data6/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
     except FileNotFoundError or OSError:
         # print the error
         print("fileid:", fileid)
@@ -54,8 +54,9 @@ for fileid in range(1, 100):
         # for each event, get the max truth value
         max_truth = truth.max(axis=1)
         vtx_pt = vtx[:, 0, -1]
+        vtx_sum_pt = vtx[:, :, -1].sum(axis=1)
         # discard events with max truth < 2
-        nice_event_idx = ((max_truth >= 2) & (vtx_pt >= 120))
+        nice_event_idx = ((max_truth >= 2) & (vtx_pt <= 100) & (vtx_sum_pt >= 450))
         pfs = pfs[nice_event_idx]
         vtx = vtx[nice_event_idx]
         truth = truth[nice_event_idx]

@@ -81,6 +81,9 @@ def get_neural_net(model_name, new_net=False):
 
         return Net(**param_dict)
 
+def make_z_0(data):
+    data.x_pfc[:, -1] = 0
+    return data
 
 def process_data(data):
     '''
@@ -247,8 +250,8 @@ def save_class_predictions(net, data_loader, save_name):
         data = process_data(data)
         data = data.to(device)
         with torch.no_grad():
-            # scores_batch, pfc_emb, vtx_emb = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
-            scores_batch = net(data.x_pfc, data.edge_index)
+            scores_batch, pfc_emb, vtx_emb = net(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+            # scores_batch = net(data.x_pfc, data.edge_index)
             vtx_classes = scores_batch.shape[1] - 1
             class_prob_batch = nn.Softmax(dim=1)(scores_batch)
             class_true_batch = process_truth(data.truth, vtx_classes).long()

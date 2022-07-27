@@ -1,9 +1,9 @@
 from helper_functions import *
-from dataset_graph_loader import UPuppiV0
+# from dataset_graph_loader import UPuppiV0
 
-BATCHSIZE = 4
+BATCHSIZE = 64
 if __name__ == "__main__":
-    epoch_to_load = 0
+    epoch_to_load = 19
     model_name = "DynamicPointTransformer"
     # model_name = 'modelv2_analysis'
     model_name = 'modelv3_first_try'
@@ -22,11 +22,13 @@ if __name__ == "__main__":
     model_name = 'deep_multiclass_2vtx_MET'
     model_name = 'cheat_model_try2'
     model_name = 'new_transformer_try1'
+    model_name = 'multi_deep_more_curated_data'
+    model_name = 'multi_deep_curated_data'
 
 
     net = get_neural_net(model_name)
 
-    data_test = UPuppiV0(home_dir + "train8/")
+    data_test = UPuppiV0(home_dir + "all_data3/")
     test_loader = DataLoader(data_test, batch_size=BATCHSIZE, shuffle=True,
                             follow_batch=['x_pfc', 'x_vtx'])
 

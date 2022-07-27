@@ -1,5 +1,6 @@
 from helper_functions import *
 # from dataset_graph_loader import UPuppiV0
+from dense_graph_loader import UPuppiV0
 
 # seed the random number generator
 torch.manual_seed(0)
@@ -12,7 +13,6 @@ test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x
 
 data_params = {'event_num':[],'pfcs':[], 'vtxs':[], 'charges':[], 'neutrals':[], 'pileups':[], 'vtx_pt':[], 'vtx0_pt':[]}
 for counter, data in enumerate(tqdm(train_loader)):
-    # print(data.edge_index.shape)
     if data.x_vtx.shape[0] == 0:
         continue
     data_params['event_num'].append(counter)
@@ -25,6 +25,8 @@ for counter, data in enumerate(tqdm(train_loader)):
     data_params['vtx0_pt'].append(data.x_vtx[0, -1].item())
 
 df = pd.DataFrame(data_params)
+# select events where vtx0_pt > 100
+# df = df[df.vtx0_pt > 100]
 print(df.describe())
 print(df.head())
 # plot histogram of pfc and vtx counts

@@ -6,3 +6,8 @@ train5 and test5: processed datasets with rearranged vertices and primary vertex
 train6 and test6: pruned versions of train7 and test7 with possibly better predictions for neutral particles
 train7 and test7: same as train5 and test5 but with more data
 train9 and test9: processed datasets with rearranged vertices and primary vertex removed with more features
+all_data: rearranged vertices and primary vertex removed for all data
+all_data2: processed all data with vtx0_pt > 150
+all_data3: processed all data with vtx0_pt > 120
+all_data4: processed all data with vtx0_pt > 100 and vtx_sum_pt < 300
+all_data5: processed all data with vtx_sum_pt > 450
