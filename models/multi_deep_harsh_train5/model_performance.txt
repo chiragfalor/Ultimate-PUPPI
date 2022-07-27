@@ -9,3 +9,5 @@
 {'epoch': 8, 'train_loss': 62.04734814912081, 'test_accuracy': 0.47512062421568635, 'test_neutral_accuracy': 0.47382336228738037, 'test_loss': 71.97832530574576, 'auc': 0.6157071966355037}
 {'epoch': 9, 'train_loss': 67.23530474305153, 'test_accuracy': 0.6272481628892951, 'test_neutral_accuracy': 0.6347254818515555, 'test_loss': 66.61562816456598, 'auc': 0.6218166256040648}
 {'epoch': 10, 'train_loss': 62.046862334012985, 'test_accuracy': 0.6141353248390242, 'test_neutral_accuracy': 0.6184255356686589, 'test_loss': 67.51092851393881, 'auc': 0.6199295730724648}
+{'epoch': 11, 'train_loss': 72.52757892012596, 'test_accuracy': 0.5953019111768745, 'test_neutral_accuracy': 0.5879587408169699, 'test_loss': 66.99131152973101, 'auc': 0.6172014240259767}
+{'epoch': 12, 'train_loss': 67.5615014359355, 'test_accuracy': 0.5539050967312973, 'test_neutral_accuracy': 0.5453680970557468, 'test_loss': 68.08983554172144, 'auc': 0.6137588344728898}
