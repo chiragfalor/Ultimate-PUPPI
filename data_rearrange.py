@@ -78,14 +78,25 @@ for fileid in range(1, 101):
                 num_pfs = new_pfs.shape[1]
                 # remove particles with truth value 0
                 pileup_idx = np.where(new_truth[i] != 0)
+                if np.sum(new_truth[i] == 1) == 0:
+                    print(new_vtx[i, 1, :])
+                    raise(Exception("no truth value 1"))
                 # pad the array with 0s
                 new_truth[i] = np.pad(new_truth[i][pileup_idx], (0, num_pfs - len(pileup_idx[0])), 'constant', constant_values=0)
                 # print(new_pfs[i][pileup_idx].shape, num_pfs)
                 new_pfs[i] = np.concatenate((pfs[i][pileup_idx], np.zeros((num_pfs - len(pileup_idx[0]), new_pfs.shape[2]))), axis=0)
-
+                
                 new_truth[i] = new_truth[i] - 1
                 # replace truth -2 with -1
                 new_truth[i][new_truth[i] == -2] = -1
+                # count number of particles
+                Npfc = np.count_nonzero(new_pfs[i][:,0])
+                # count number of new_truth == 0
+                
+                num_pfs_removed = np.sum(new_truth[i][:Npfc] == 0)
+                if num_pfs_removed == 0:
+                    print(new_truth[i][:Npfc])
+                    print(new_vtx[i])
 
         if pop_top_vtx:
             new_vtx = new_vtx[:, 1:, :]

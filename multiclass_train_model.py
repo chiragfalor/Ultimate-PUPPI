@@ -4,8 +4,8 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'all_data5/')
-data_test = UPuppiV0(home_dir + 'all_data5/')
+data_train = UPuppiV0(home_dir + 'all_data6/')
+data_test = UPuppiV0(home_dir + 'all_data6/')
 BATCHSIZE = 64
 
 # model_name = "multiclassifier_2_vtx_without_primary"
@@ -28,6 +28,7 @@ model_name = 'multi_deep_more_curated_data'
 model_name = 'multi_deep_all_data4'
 # model_name = 'multi_deep_harsh_train5'
 model_name = 'multi_deep_all_data5'
+model_name = 'multi_deep_all_data6'
 
 vtx_classes = 1
 
@@ -150,7 +151,7 @@ for epoch in range(NUM_EPOCHS):
                     'opt':optimizer.state_dict()} 
 
     torch.save(state_dicts, os.path.join(model_dir, 'epoch-{:02d}.pt'.format(epoch)))
-    print("Model saved")
+    print("Model {} saved".format(model_name))
     print("Time elapsed: ", time.time() - start_time)
     print("-----------------------------------------------------")
     test_loss, test_accuracy, test_neutral_accuracy, auc = test(net, combined_classification_embedding_loss_puppi)

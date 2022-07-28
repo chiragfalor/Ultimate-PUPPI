@@ -56,7 +56,7 @@ for fileid in range(1, 100):
         vtx_pt = vtx[:, 0, -1]
         vtx_sum_pt = vtx[:, :, -1].sum(axis=1)
         # discard events with max truth < 2
-        nice_event_idx = ((max_truth >= 2) & (vtx_pt <= 100) & (vtx_sum_pt >= 450))
+        nice_event_idx = ((max_truth >= 2) & (vtx_pt <= 40) & (vtx_sum_pt >= 0))
         pfs = pfs[nice_event_idx]
         vtx = vtx[nice_event_idx]
         truth = truth[nice_event_idx]
