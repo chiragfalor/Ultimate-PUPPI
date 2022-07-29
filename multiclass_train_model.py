@@ -4,9 +4,9 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'all_data6/')
-data_test = UPuppiV0(home_dir + 'all_data6/')
-BATCHSIZE = 64
+data_train = UPuppiV0(home_dir + 'train_new/')
+data_test = UPuppiV0(home_dir + 'test_new/')
+BATCHSIZE = 32
 
 # model_name = "multiclassifier_2_vtx_without_primary"
 model_name = "multiclassifier_pt_weighted"
@@ -29,6 +29,9 @@ model_name = 'multi_deep_all_data4'
 # model_name = 'multi_deep_harsh_train5'
 model_name = 'multi_deep_all_data5'
 model_name = 'multi_deep_all_data6'
+model_name = 'multi_deep_new_data'
+model_name = 'multiclass_new_data'
+
 
 vtx_classes = 1
 
@@ -39,7 +42,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 15, dropout=0, vtx_classes=vtx_classes, hidden_dim=160, k1=63, k2=31).to(device)
+net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 18, dropout=0, vtx_classes=vtx_classes, hidden_dim=80, k1=63, k2=31).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)

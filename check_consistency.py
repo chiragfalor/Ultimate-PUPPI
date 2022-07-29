@@ -44,3 +44,7 @@ for fileid in range(1, 101):
                     print(truth_event[:Npfs])
                     print(vtx_event[:Nvtx])
                     raise(Exception("error"))
+                elif np.sum(truth[i] == 1) == 0:
+                    print(i, truth[i])
+                    print(vtx_event[:Nvtx])
+                    raise(Exception("error"))

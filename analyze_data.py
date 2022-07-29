@@ -5,7 +5,7 @@ from helper_functions import *
 # seed the random number generator
 torch.manual_seed(0)
 
-data_train = UPuppiV0(home_dir + "all_data/")
+data_train = UPuppiV0(home_dir + "all_new_data/")
 # data_train = UPuppiV0(home_dir + 'train5/')
 data_test = UPuppiV0(home_dir + 'test5/')
 train_loader = DataLoader(data_train, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
