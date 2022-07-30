@@ -4,34 +4,12 @@ from loss_functions import *
 
 start_time = time.time()
 
-data_train = UPuppiV0(home_dir + 'train_new3/')
-data_test = UPuppiV0(home_dir + 'test_new3/')
+data_train = UPuppiV0(home_dir + 'train_new/')
+data_test = UPuppiV0(home_dir + 'test_new/')
 BATCHSIZE = 32
 
-# model_name = "multiclassifier_2_vtx_without_primary"
-model_name = "multiclassifier_pt_weighted"
-# model_name = "deep_multiclass_test"
-model_name = "deep_multiclass_2vtx_MET"
-model_name = "deep_multiclass_puppi_MET"
-model_name = "deep_transformer_try1"
-model_name = "cheat_model_try2"
-model_name = "deep_multiclass_enhanced_data"
-model_name = "deep_multiclass_enhanced_data_try2"
-model_name = "multi_deep_try1"
-model_name = "deep_multiclass_MET_weight_5"
-model_name = "deep_multiclass_neg_emb_weight"
-model_name = "deep_high_eta_enc_try1"
-model_name = "multi_deep_more_features_try1"
-model_name = 'multi_deep_curated_data'
-model_name = 'multi_deep_more_curated_data'
-
-model_name = 'multi_deep_all_data4'
-# model_name = 'multi_deep_harsh_train5'
-model_name = 'multi_deep_all_data5'
-model_name = 'multi_deep_all_data6'
-model_name = 'multi_deep_new_data'
-model_name = 'multiclass_new_data'
-model_name = 'multi_deep_highpt_new3'
+model_name = 'cheat_new_try2'
+model_name = 'cheat_new_try3'
 
 
 vtx_classes = 1
@@ -43,7 +21,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using device: ", device, torch.cuda.get_device_name(0))
 
 model_dir = home_dir + 'models/{}/'.format(model_name)
-net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 18, dropout=0, vtx_classes=vtx_classes, hidden_dim=80, k1=63, k2=31).to(device)
+net = get_neural_net(model_name, new_net=True)(pfc_input_dim = 18, dropout=0, vtx_classes=vtx_classes, hidden_dim=80, k1=63, k2=31, cheat_nodes = 1).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 # save the model hyperparameters in the model directory
 if not os.path.exists(model_dir): os.makedirs(model_dir)
@@ -71,7 +49,7 @@ def train(model, optimizer, loss_fn, embedding_loss_weight=0.1, neutral_weight =
         data = process_data(data)
         data.to(device)
         optimizer.zero_grad()
-        scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)
+        scores, pfc_embeddings, vtx_embeddings = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch, data.truth)
         # scores = scores.squeeze()
         if contrastive:
             vtx_embeddings = None  # uncomment if you want to use contrastive loss
@@ -100,7 +78,7 @@ def test(model, loss_fn):
     for counter, data in enumerate(tqdm(test_loader)):
         data = process_data(data)
         data.to(device)
-        score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch)[0]
+        score = model(data.x_pfc, data.x_vtx, data.x_pfc_batch, data.x_vtx_batch, data.truth)[0]
         vtx_classes = score.shape[1] - 1
         loss = loss_fn(data, score, embedding_loss_weight=0, vtx_classes=vtx_classes, classification_weighting = 'pt', MET_loss_weight=0)
         pred = torch.argmax(score, dim=1).long()
@@ -147,10 +125,10 @@ model_performance = []
 
 for epoch in range(NUM_EPOCHS):
     if epoch % 2 == 0:
-        embedding_loss_weight = 0.03*vtx_classes
+        embedding_loss_weight = 0.3*vtx_classes
     else:
         embedding_loss_weight = 0.0
-    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=False, classification_weighting='num', MET_loss_weight=0)
+    train_loss = train(net, optimizer, loss_fn=combined_classification_embedding_loss_puppi, embedding_loss_weight=embedding_loss_weight, neutral_weight=epoch+1, contrastive=True, classification_weighting='num', MET_loss_weight=0)
     state_dicts = {'model':net.state_dict(),
                     'opt':optimizer.state_dict()} 
 

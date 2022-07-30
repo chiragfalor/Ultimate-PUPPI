@@ -25,6 +25,8 @@ if __name__ == "__main__":
     model_name = 'multi_deep_more_curated_data'
     model_name = 'multi_deep_curated_data'
     model_name = 'multi_deep_new_data'
+    model_name = 'cheat_new_try1'
+    model_name = 'cheat_new_try2'
 
 
     net = get_neural_net(model_name)

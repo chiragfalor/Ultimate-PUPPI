@@ -6,7 +6,7 @@ from torch_geometric.data import DataLoader
 torch.manual_seed(8)
 
 if __name__ == '__main__':
-    data_test = UPuppiV0(home_dir+"test/")
+    data_test = UPuppiV0(home_dir+"test_new/")
 
     model_name = "vtx_pred_model_puppi"
     model_name = 'multiclassifier_puppi_2_vtx'
@@ -16,13 +16,15 @@ if __name__ == '__main__':
     model_name = "cheat_model_try1"
     model_name = "deep_multiclass_no_emb_weight"
     # model_name = "deep_multiclass_neg_emb_weight"
+    model_name = "multi_deep_new_data"
+    model_name = "cheat_new_try2"
 
 
     test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
     model_dir = home_dir + 'models/{}/'.format(model_name)
 
     # model params
-    epoch_num = 19
+    epoch_num = 41
     net = get_neural_net(model_name)
     plot_against = 'z true'
     plot_against = 'vtx id'
@@ -34,6 +36,9 @@ if __name__ == '__main__':
         data = next(iter(test_loader))
         if plot_against == 'z true':
             pfc_truth = data.y.detach().numpy()
+            # clamp z to be between -200 and 200
+            pfc_truth[pfc_truth > 200] = 200
+            pfc_truth[pfc_truth < -200] = -200
         elif plot_against == 'vtx id':
             pfc_truth = data.truth.int().detach().numpy()
             # clamp truth at 2

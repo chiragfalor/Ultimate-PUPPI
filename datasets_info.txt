@@ -13,5 +13,9 @@ all_data4: processed all data with vtx0_pt > 100 and vtx_sum_pt < 300
 all_data5: processed all data with vtx_sum_pt > 450
 all_data6: processed all data with vtx0_pt < 40
 all_new_data: new data with bug removed
-train_new: processed new training data
-test_new: processed new test data
+train_new: processed new training data without primary vtx
+test_new: processed new test data without primary vtx
+train_new2: processed new training data with primary vtx
+test_new2: processed new test data with primary vtx
+train_new3: processed new training data with primary vtx removed and pfc_pt > 1
+test_new3: processed new test data with primary vtx removed and pfc_pt > 1

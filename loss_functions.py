@@ -111,8 +111,8 @@ def contrastive_loss_event(pfc_enc, true_vtx_id, num_pfc=64, c1=1, reg_ratio = 0
     # get a mask which is c if the particles are the same and -1 if they are different
     mask = -1+(c1*num_vtx+1)*(vtx_id_1 == vtx_id_2).float()
     euclidean_dist = F.pairwise_distance(pfc_enc_1, pfc_enc_2)
-    loss = 10*torch.mean(mask*torch.pow(euclidean_dist, 2))
-    loss += reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean()
+    loss = torch.mean(mask*torch.pow(euclidean_dist, 2))
+    loss += 0.1*reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean()
     if print_bool:
         print("Contrastive loss: {:.2f}, Euclidean dist between particles: {:.2f}, Regularization loss: {:.2f}".format(loss.item(),torch.mean(torch.pow(euclidean_dist, 2)).item(), reg_ratio*((torch.norm(pfc_enc, p=2, dim=1))**4).mean().item()))
     return loss

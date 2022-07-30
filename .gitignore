@@ -159,6 +159,10 @@ all_data8/
 all_new_data/
 train_new/
 test_new/
+train_new2/
+test_new2/
+train_new3/
+test_new3/
 
 
 # predictions

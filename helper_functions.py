@@ -58,7 +58,7 @@ def get_neural_net(model_name, new_net=False):
         from models.deep_multiclass_transformer import Net
     elif model.startswith("deep_multiclass"):
         from models.deep_multiclass_model import Net
-    elif model.startswith("cheat"):
+    elif model.startswith("cheat_model"):
         from models.cheat_model import Net
     elif model.startswith("multi_deep"):
         from models.multilayer_deep_multiclass_model import Net
@@ -68,6 +68,8 @@ def get_neural_net(model_name, new_net=False):
         from models.Point_transformer_connect_all import Net
     elif model.startswith('simple_transformer'):
         from models.simple_point_transformer import Net
+    elif model.startswith('cheat_new'):
+        from models.cheat_model_new import Net
     else:
         raise(Exception("Model not found"))
 

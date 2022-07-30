@@ -13,7 +13,7 @@ with open('home_path.txt', 'r') as f:
 
 pop_top_vtx = True
 
-for fileid in range(1, 100):
+for fileid in range(40, 50):
     try:
         file = h5py.File('/work/tier3/bmaier/upuppi/samples/events_'+str(fileid)+".h5", "r")
         # file_out = h5py.File(home_dir + 'test2/raw/samples_v0_dijet_'+str(fileid)+".h5", "w")
@@ -35,6 +35,9 @@ for fileid in range(1, 100):
         vtx = f["vtx"][:, :50]
         truth = f["truth"][:, :3000]
         z = f["z"][:, :3000]
+        # clamp the z values to be between -200 and 200
+        z[z > 200] = 200
+        z[z < -200] = -200
         
 
         if pop_top_vtx:
@@ -46,6 +49,9 @@ for fileid in range(1, 100):
             vtx = vtx[:, 1:, :]
             for i in range(vtx.shape[0]):
                 pileup_idx = (truth[i, :] != 0)
+                high_pt_idx = (pfs[i, :, 0] > 1)
+                keep_idx = np.logical_and(pileup_idx, high_pt_idx)
+                pileup_idx = keep_idx
                 if np.sum(truth[i] == 1) == 0:
                     print(truth[i])
                     print(vtx[i, :, :])
@@ -102,7 +108,7 @@ for fileid in range(1, 100):
 
 
         # save the processed data in pfs
-        # new features: px, py, eta, phi, pt, E, log_E, pid, q, z
+        # new features: px, py, eta, phi, pt, E, log_E, pid, z_pfc, q, z_vtx
         new_pfs = np.concatenate((px[:,:,np.newaxis], py[:,:,np.newaxis], eta[:,:,np.newaxis], phi[:,:,np.newaxis], pt[:,:,np.newaxis], E[:,:,np.newaxis], log_E[:,:,np.newaxis], z_pfc[:,:, np.newaxis], pid[:,:,:], q[:,:,np.newaxis], z_vtx[:,:,np.newaxis]), axis=2)
     # save the processed data in the file
     

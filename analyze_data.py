@@ -4,12 +4,10 @@ from helper_functions import *
 
 # seed the random number generator
 torch.manual_seed(0)
-
-data_train = UPuppiV0(home_dir + "all_new_data/")
+data_dir = home_dir + "all_new_data/"
+data_train = UPuppiV0(data_dir)
 # data_train = UPuppiV0(home_dir + 'train5/')
-data_test = UPuppiV0(home_dir + 'test5/')
 train_loader = DataLoader(data_train, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
-test_loader = DataLoader(data_test, batch_size=1, shuffle=True, follow_batch=['x_pfc', 'x_vtx'])
 
 data_params = {'event_num':[],'pfcs':[], 'vtxs':[], 'charges':[], 'neutrals':[], 'pileups':[], 'vtx_pt':[], 'vtx0_pt':[], 'vtx0_eta_max':[], 'vtx0_eta_min':[]}
 for counter, data in enumerate(tqdm(train_loader)):
@@ -38,6 +36,7 @@ df = pd.DataFrame(data_params)
 # select events where vtx0_pt > 100
 # df = df[df.vtx0_pt > 100]
 print(df.describe(percentiles=[0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]))
+df.describe(percentiles=[0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]).to_csv(data_dir + 'data_describe.csv')
 print(df.head())
 # plot histogram of pfc and vtx counts
 fig, ax = plt.subplots(1,2, figsize=(10,5))
@@ -58,10 +57,6 @@ ax.hist(df['vtx0_pt'], bins=100)
 plt.savefig(home_dir + 'results/vtx0_pt_hist_2.png', bbox_inches='tight')
 plt.close()
 
-# plot histogram of vtx0 eta
-fig, ax = plt.subplots(1,1, figsize=(10,5))
-ax.hist(df['vtx0_eta'], bins=100)
-plt.savefig(home_dir + 'results/vtx0_eta_hist_2.png', bbox_inches='tight')
-plt.close()
+
 
 
